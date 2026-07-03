@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tadjpharm
+      POSTGRES_PASSWORD: tadjpharm
+      POSTGRES_DB: tadjpharm
+    ports:
+      # 5433 sur l'hote pour eviter un conflit avec une instance Postgres locale sur 5432
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

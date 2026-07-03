@@ -1,0 +1,167 @@
+import { useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
+import { useCategories } from "../../hooks/useCatalog";
+import { TagListInput } from "./TagListInput";
+import { ImagePicker } from "./ImagePicker";
+import { Card, CardBody, CardHeader } from "../ui/Card";
+import { Field, Input, Select, Textarea } from "../ui/Field";
+import { Switch } from "../ui/Switch";
+import { Button } from "../ui/Button";
+import type { CreateProductPayload } from "../../api/admin";
+
+interface ProductFormProps {
+  onSubmit: (payload: CreateProductPayload) => Promise<void>;
+  submitting: boolean;
+  images: File[];
+  onImagesChange: (files: File[]) => void;
+}
+
+export function ProductForm({ onSubmit, submitting, images, onImagesChange }: ProductFormProps) {
+  const { data: categories } = useCategories();
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [basePrice, setBasePrice] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [hasColors, setHasColors] = useState(false);
+  const [hasSizes, setHasSizes] = useState(false);
+  const [hasVolumes, setHasVolumes] = useState(false);
+  const [colors, setColors] = useState<string[]>([]);
+  const [sizes, setSizes] = useState<string[]>([]);
+  const [volumes, setVolumes] = useState<string[]>([]);
+  const [initialStock, setInitialStock] = useState("0");
+  const [error, setError] = useState<string | null>(null);
+
+  const hasAnyOption = hasColors || hasSizes || hasVolumes;
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    const price = Number(basePrice);
+    if (!name || !description || !categoryId || Number.isNaN(price) || price <= 0) {
+      setError("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+
+    await onSubmit({
+      name,
+      description,
+      basePrice: price,
+      categoryId,
+      hasColors,
+      hasSizes,
+      hasVolumes,
+      colors: colors.map((label) => ({ label })),
+      sizes: sizes.map((label) => ({ label })),
+      volumes: volumes.map((label) => ({ label })),
+      initialStock: hasAnyOption ? 0 : Number(initialStock) || 0,
+    });
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <Card>
+        <CardHeader title="Informations generales" description="Le nom, le descriptif et le prix affiches sur la fiche produit" />
+        <CardBody className="flex flex-col gap-4">
+          <Field label="Nom du produit" htmlFor="name" required>
+            <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Cannes anglaises reglables" />
+          </Field>
+
+          <Field label="Description" htmlFor="description" required>
+            <Textarea
+              id="description"
+              required
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Decrivez le produit, ses caracteristiques, son usage..."
+            />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Prix (DA)" htmlFor="price" required>
+              <Input id="price" required type="number" min={0} value={basePrice} onChange={(e) => setBasePrice(e.target.value)} />
+            </Field>
+            <Field label="Categorie" htmlFor="category" required>
+              <Select id="category" required value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+                <option value="">Selectionner...</option>
+                {categories?.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Options du produit" description="Activez les options pertinentes puis ajoutez les valeurs disponibles" />
+        <CardBody className="flex flex-col gap-4">
+          <div>
+            <Switch checked={hasColors} onChange={setHasColors} label="Couleurs" description="Le client choisit une couleur" />
+            {hasColors && (
+              <div className="mt-2">
+                <TagListInput values={colors} onChange={setColors} placeholder="Ajouter une couleur..." />
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-slate-100 pt-4">
+            <Switch checked={hasSizes} onChange={setHasSizes} label="Tailles" description="Le client choisit une taille" />
+            {hasSizes && (
+              <div className="mt-2">
+                <TagListInput values={sizes} onChange={setSizes} placeholder="Ajouter une taille..." />
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-slate-100 pt-4">
+            <Switch checked={hasVolumes} onChange={setHasVolumes} label="Volume / contenance" description="Produit liquide, ex: 250ml" />
+            {hasVolumes && (
+              <div className="mt-2">
+                <TagListInput values={volumes} onChange={setVolumes} placeholder="Ajouter un volume..." />
+              </div>
+            )}
+          </div>
+
+          {!hasAnyOption && (
+            <div className="border-t border-slate-100 pt-4">
+              <Field label="Stock initial" htmlFor="stock" hint="Aucune option activee : un seul stock est suivi pour ce produit.">
+                <Input id="stock" type="number" min={0} value={initialStock} onChange={(e) => setInitialStock(e.target.value)} className="max-w-[160px]" />
+              </Field>
+            </div>
+          )}
+
+          {hasAnyOption && (
+            <p className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700">
+              Apres creation, ajoutez les combinaisons (ex: Rouge / M) et leur stock sur la page du produit.
+            </p>
+          )}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Images" description="La premiere image sera utilisee comme visuel principal" />
+        <CardBody>
+          <ImagePicker files={images} onChange={onImagesChange} />
+        </CardBody>
+      </Card>
+
+      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+
+      <div className="flex items-center gap-3">
+        <Button type="submit" variant="primary" disabled={submitting}>
+          {submitting ? "Enregistrement..." : "Creer le produit"}
+        </Button>
+        <Link to="/admin/produits">
+          <Button type="button" variant="ghost">
+            Annuler
+          </Button>
+        </Link>
+      </div>
+    </form>
+  );
+}

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx prisma *)",
+      "Read(//c/Users/SDD/AppData/Local/Temp/claude/c--Users-SDD-Code-DigitalD-TadjPharm/3d00326f-9785-4656-ac31-eb812aaf2fbc/scratchpad/verify/**)",
+      "Bash(node check-admin-redesign.mjs)",
+      "Bash(npx tsc *)",
+      "Bash(ls public/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} size=%{size_download}\\\\n\" -A \"Mozilla/5.0\" \"https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200&q=70\" --max-time 20)"
+    ]
+  }
+}
