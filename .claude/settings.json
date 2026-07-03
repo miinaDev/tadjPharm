@@ -6,7 +6,8 @@
       "Bash(node check-admin-redesign.mjs)",
       "Bash(npx tsc *)",
       "Bash(ls public/)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code} size=%{size_download}\\\\n\" -A \"Mozilla/5.0\" \"https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200&q=70\" --max-time 20)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code} size=%{size_download}\\\\n\" -A \"Mozilla/5.0\" \"https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200&q=70\" --max-time 20)",
+      "Bash(node dist/server.js)"
     ]
   }
 }
