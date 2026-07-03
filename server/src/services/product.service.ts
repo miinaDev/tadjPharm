@@ -2,9 +2,7 @@ import { prisma } from "../prisma";
 import { HttpError } from "../middleware/errorHandler";
 import { toNumber } from "../utils/decimal";
 import { slugify, uniqueSlugSuffix } from "../utils/slugify";
-import fs from "node:fs";
-import path from "node:path";
-import { UPLOADS_DIR } from "../middleware/upload";
+import { saveImage, deleteStoredImage } from "./storage.service";
 import type { CreateProductInput, CreateVariantInput, UpdateProductInput, UpdateVariantInput } from "./product.types";
 
 const PRODUCT_INCLUDE = {
@@ -228,16 +226,17 @@ export async function addImages(productId: string, files: Express.Multer.File[])
 
   const existingCount = await prisma.productImage.count({ where: { productId } });
   const images = await Promise.all(
-    files.map((file, index) =>
-      prisma.productImage.create({
+    files.map(async (file, index) => {
+      const stored = await saveImage(file);
+      return prisma.productImage.create({
         data: {
           productId,
-          filename: file.filename,
-          url: `/uploads/products/${file.filename}`,
+          filename: stored.ref,
+          url: stored.url,
           position: existingCount + index,
         },
-      })
-    )
+      });
+    })
   );
   return images;
 }
@@ -247,10 +246,5 @@ export async function deleteImage(imageId: string) {
   if (!image) throw new HttpError(404, "Image introuvable");
 
   await prisma.productImage.delete({ where: { id: imageId } });
-
-  try {
-    fs.unlinkSync(path.join(UPLOADS_DIR, image.filename));
-  } catch {
-    // fichier deja absent, on ignore
-  }
+  await deleteStoredImage(image.filename);
 }

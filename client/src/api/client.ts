@@ -46,5 +46,8 @@ export const apiClient = {
 };
 
 export function resolveMediaUrl(url: string): string {
+  // Cloudinary renvoie une URL absolue (https://...), qu'on sert telle quelle.
+  // Le stockage disque local renvoie un chemin relatif (/uploads/...) a prefixer par l'API.
+  if (/^https?:\/\//i.test(url)) return url;
   return `${API_URL}${url}`;
 }

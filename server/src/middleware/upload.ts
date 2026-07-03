@@ -1,25 +1,18 @@
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
 import multer from "multer";
 
 export const UPLOADS_DIR = path.join(__dirname, "..", "..", "uploads", "products");
 
+// Dossier de secours pour le stockage disque (developpement local).
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const unique = crypto.randomBytes(16).toString("hex");
-    cb(null, `${unique}${ext}`);
-  },
-});
-
+// On garde les fichiers en memoire (buffer) : le service de stockage decide
+// ensuite de les envoyer vers Cloudinary (prod) ou de les ecrire sur disque (dev).
 export const uploadProductImages = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024, files: 6 },
   fileFilter: (_req, file, cb) => {
     if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {

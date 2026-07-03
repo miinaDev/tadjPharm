@@ -14,17 +14,24 @@ export function signAdminToken(payload: AdminTokenPayload): string {
   return jwt.sign(payload, env.jwtSecret, { expiresIn: "12h" });
 }
 
+// En production, le frontend (Vercel) et l'API (Render) sont sur des domaines
+// differents : le cookie doit etre "SameSite=None; Secure" pour etre accepte
+// lors des requetes cross-site. En local on reste sur "Lax" (http, meme machine).
+const cookieOptions = {
+  httpOnly: true,
+  sameSite: env.isProduction ? ("none" as const) : ("lax" as const),
+  secure: env.isProduction,
+};
+
 export function setAdminCookie(res: Response, token: string) {
   res.cookie(COOKIE_NAME, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: env.nodeEnv === "production",
+    ...cookieOptions,
     maxAge: 12 * 60 * 60 * 1000,
   });
 }
 
 export function clearAdminCookie(res: Response) {
-  res.clearCookie(COOKIE_NAME);
+  res.clearCookie(COOKIE_NAME, cookieOptions);
 }
 
 export function requireAdmin(req: Request, _res: Response, next: NextFunction) {
