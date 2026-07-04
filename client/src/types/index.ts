@@ -45,6 +45,8 @@ export interface Product {
   slug: string;
   description: string;
   basePrice: number;
+  discountPercent: number;
+  ribbonLabel: string | null;
   isActive: boolean;
   hasColors: boolean;
   hasSizes: boolean;
@@ -58,21 +60,33 @@ export interface Product {
   variants: ProductVariant[];
 }
 
-export interface Wilaya {
-  id: number;
+export interface DeliveryBureau {
+  id: string;
+  wilayaId: number;
   name: string;
-  deliveryPrice: number;
   isActive: boolean;
 }
 
+export interface Wilaya {
+  id: number;
+  name: string;
+  homePrice: number;
+  officePrice: number;
+  isActive: boolean;
+  bureaus: DeliveryBureau[];
+}
+
 export type OrderStatus = "NOUVELLE" | "CONFIRMEE" | "EXPEDIEE" | "ANNULEE";
+export type ShippingMethod = "HOME" | "OFFICE";
 
 export interface OrderItem {
   id: string;
-  variantId: string;
-  variant: ProductVariant & { product: Product };
+  variantId: string | null;
+  variant: (ProductVariant & { product: Product }) | null;
   quantity: number;
   unitPriceSnapshot: number;
+  productNameSnapshot: string;
+  variantLabelSnapshot: string;
 }
 
 export interface Order {
@@ -81,8 +95,14 @@ export interface Order {
   lastName: string;
   email: string;
   phone: string;
-  wilayaId: number;
-  wilaya: Wilaya;
+  wilayaId: number | null;
+  wilaya: Wilaya | null;
+  wilayaNameSnapshot: string;
+  shippingMethod: ShippingMethod;
+  address: string;
+  bureauId: string | null;
+  bureau: DeliveryBureau | null;
+  bureauNameSnapshot: string | null;
   items: OrderItem[];
   deliveryFeeSnapshot: number;
   totalSnapshot: number;
@@ -93,4 +113,23 @@ export interface Order {
 export interface AdminUser {
   id: string;
   email: string;
+}
+
+export interface LowStockItem {
+  productId: string;
+  productName: string;
+  variantLabel: string;
+  stock: number;
+}
+
+export interface DashboardStats {
+  newOrders: number;
+  monthOrders: number;
+  prevMonthOrders: number;
+  monthRevenue: number;
+  monthAvgBasket: number;
+  outOfStockCount: number;
+  lowStockCount: number;
+  recentOrders: Order[];
+  lowStock: LowStockItem[];
 }

@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { Order } from "../types";
+import type { Order, ShippingMethod } from "../types";
 
 export interface CreateOrderPayload {
   items: { variantId: string; quantity: number }[];
@@ -8,6 +8,9 @@ export interface CreateOrderPayload {
   lastName: string;
   email: string;
   phone: string;
+  shippingMethod: ShippingMethod;
+  address?: string;
+  bureauId?: string;
 }
 
 export const ordersApi = {

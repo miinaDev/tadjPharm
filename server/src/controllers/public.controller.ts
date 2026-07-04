@@ -7,6 +7,12 @@ import * as wilayaService from "../services/wilaya.service";
 
 export async function listCategories(_req: Request, res: Response) {
   const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  // "Autre" (categorie de repli) doit toujours apparaitre en dernier, meme si le tri est alphabetique.
+  categories.sort((a, b) => {
+    if (a.slug === "autre") return 1;
+    if (b.slug === "autre") return -1;
+    return a.name.localeCompare(b.name, "fr");
+  });
   res.json(categories);
 }
 

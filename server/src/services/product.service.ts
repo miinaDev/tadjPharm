@@ -1,9 +1,10 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 import { HttpError } from "../middleware/errorHandler";
 import { toNumber } from "../utils/decimal";
 import { slugify, uniqueSlugSuffix } from "../utils/slugify";
 import { saveImage, deleteStoredImage } from "./storage.service";
-import type { CreateProductInput, CreateVariantInput, UpdateProductInput, UpdateVariantInput } from "./product.types";
+import type { CreateProductInput, CreateVariantInput, UpdateColorInput, UpdateProductInput, UpdateVariantInput } from "./product.types";
 
 const PRODUCT_INCLUDE = {
   category: true,
@@ -58,17 +59,37 @@ export async function getPublicProductBySlug(slug: string) {
   return serializeProduct(product);
 }
 
-export async function listAdminProducts(params: { page: number; pageSize: number }) {
-  const [products, total] = await Promise.all([
+export async function listAdminProducts(params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  status?: "active" | "inactive";
+}) {
+  const searchFilter: Prisma.ProductWhereInput = params.search
+    ? {
+        OR: [
+          { name: { contains: params.search, mode: "insensitive" } },
+          { category: { name: { contains: params.search, mode: "insensitive" } } },
+        ],
+      }
+    : {};
+  const statusFilter: Prisma.ProductWhereInput =
+    params.status === "active" ? { isActive: true } : params.status === "inactive" ? { isActive: false } : {};
+  const where: Prisma.ProductWhereInput = { AND: [searchFilter, statusFilter] };
+
+  const [products, total, activeCount, inactiveCount] = await Promise.all([
     prisma.product.findMany({
+      where,
       include: PRODUCT_INCLUDE,
       orderBy: { createdAt: "desc" },
       skip: (params.page - 1) * params.pageSize,
       take: params.pageSize,
     }),
-    prisma.product.count(),
+    prisma.product.count({ where }),
+    prisma.product.count({ where: { isActive: true } }),
+    prisma.product.count({ where: { isActive: false } }),
   ]);
-  return { products: products.map(serializeProduct), total };
+  return { products: products.map(serializeProduct), total, activeCount, inactiveCount };
 }
 
 export async function getAdminProductById(id: string) {
@@ -90,6 +111,8 @@ export async function createProduct(input: CreateProductInput) {
         slug,
         description: input.description,
         basePrice: input.basePrice,
+        discountPercent: input.discountPercent,
+        ribbonLabel: input.ribbonLabel?.trim() || null,
         categoryId: input.categoryId,
         hasColors: input.hasColors,
         hasSizes: input.hasSizes,
@@ -124,7 +147,10 @@ export async function createProduct(input: CreateProductInput) {
 export async function updateProduct(id: string, input: UpdateProductInput) {
   const product = await prisma.product.findUnique({ where: { id } });
   if (!product) throw new HttpError(404, "Produit introuvable");
-  await prisma.product.update({ where: { id }, data: input });
+  const data = { ...input };
+  // Normaliser le ruban : chaine vide -> null (retire l'etiquette). Champ absent = non modifie.
+  if (typeof data.ribbonLabel === "string") data.ribbonLabel = data.ribbonLabel.trim() || null;
+  await prisma.product.update({ where: { id }, data });
   return getAdminProductById(id);
 }
 
@@ -132,11 +158,8 @@ export async function deleteProduct(id: string) {
   const product = await prisma.product.findUnique({ where: { id } });
   if (!product) throw new HttpError(404, "Produit introuvable");
 
-  const orderCount = await prisma.orderItem.count({ where: { variant: { productId: id } } });
-  if (orderCount > 0) {
-    await prisma.product.update({ where: { id }, data: { isActive: false } });
-    return { softDeleted: true };
-  }
+  // Suppression franche : les variantes cascadent, OrderItem.variantId -> SetNull,
+  // et les commandes conservent productNameSnapshot / variantLabelSnapshot.
   await prisma.product.delete({ where: { id } });
   return { softDeleted: false };
 }
@@ -166,18 +189,8 @@ export async function addOption(productId: string, type: "color" | "size" | "vol
 }
 
 export async function removeOption(productId: string, type: "color" | "size" | "volume", optionId: string) {
-  let usedInOrder: number;
-  if (type === "color") {
-    usedInOrder = await prisma.orderItem.count({ where: { variant: { colorId: optionId } } });
-  } else if (type === "size") {
-    usedInOrder = await prisma.orderItem.count({ where: { variant: { sizeId: optionId } } });
-  } else {
-    usedInOrder = await prisma.orderItem.count({ where: { variant: { volumeId: optionId } } });
-  }
-  if (usedInOrder > 0) {
-    throw new HttpError(409, "Impossible de supprimer une option utilisee dans une commande existante");
-  }
-
+  // Les variantes concernees cascadent ; OrderItem.variantId -> SetNull et les
+  // commandes conservent leur snapshot, donc la suppression est toujours possible.
   if (type === "color") {
     await prisma.productColor.delete({ where: { id: optionId } });
   } else if (type === "size") {
@@ -185,6 +198,13 @@ export async function removeOption(productId: string, type: "color" | "size" | "
   } else {
     await prisma.productVolume.delete({ where: { id: optionId } });
   }
+  return getAdminProductById(productId);
+}
+
+export async function updateColor(productId: string, colorId: string, input: UpdateColorInput) {
+  const color = await prisma.productColor.findUnique({ where: { id: colorId } });
+  if (!color || color.productId !== productId) throw new HttpError(404, "Couleur introuvable");
+  await prisma.productColor.update({ where: { id: colorId }, data: input });
   return getAdminProductById(productId);
 }
 
@@ -213,10 +233,7 @@ export async function updateVariant(variantId: string, input: UpdateVariantInput
 }
 
 export async function deleteVariant(variantId: string) {
-  const orderCount = await prisma.orderItem.count({ where: { variantId } });
-  if (orderCount > 0) {
-    throw new HttpError(409, "Impossible de supprimer une variante ayant des commandes");
-  }
+  // OrderItem.variantId -> SetNull : les commandes conservent leur snapshot.
   await prisma.productVariant.delete({ where: { id: variantId } });
 }
 

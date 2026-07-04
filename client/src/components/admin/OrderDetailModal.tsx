@@ -1,13 +1,8 @@
 import type { ReactNode } from "react";
-import type { Order, OrderItem } from "../../types";
+import type { Order } from "../../types";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { PriceTag } from "../product/PriceTag";
 import { IconClose } from "../ui/icons";
-
-function variantLabel(item: OrderItem) {
-  const parts = [item.variant.color?.label, item.variant.size?.label, item.variant.volume?.label].filter(Boolean);
-  return parts.length > 0 ? parts.join(" / ") : "Standard";
-}
 
 function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -59,7 +54,16 @@ export function OrderDetailModal({ order, onClose }: { order: Order; onClose: ()
             <Row label="Nom" value={order.lastName} />
             <Row label="Email" value={order.email} />
             <Row label="Telephone" value={order.phone} />
-            <Row label="Wilaya" value={order.wilaya.name} />
+            <Row label="Wilaya" value={order.wilayaNameSnapshot || order.wilaya?.name || "-"} />
+          </Section>
+
+          <Section title="Livraison">
+            <Row label="Mode" value={order.shippingMethod === "OFFICE" ? "Au bureau" : "A domicile"} />
+            {order.shippingMethod === "OFFICE" ? (
+              <Row label="Bureau" value={order.bureau?.name ?? order.bureauNameSnapshot ?? "-"} />
+            ) : (
+              <Row label="Adresse" value={order.address || "-"} />
+            )}
           </Section>
 
           <Section title={`Article${order.items.length > 1 ? "s" : ""}`}>
@@ -67,11 +71,14 @@ export function OrderDetailModal({ order, onClose }: { order: Order; onClose: ()
               {order.items.map((item) => (
                 <div key={item.id} className="py-2 first:pt-0 last:pb-0">
                   <div className="flex justify-between text-sm">
-                    <span className="font-medium text-slate-900">{item.variant.product.name}</span>
+                    <span className="font-medium text-slate-900">
+                      {item.productNameSnapshot || item.variant?.product?.name || "Produit supprime"}
+                    </span>
                     <PriceTag amount={item.unitPriceSnapshot * item.quantity} className="font-medium text-slate-900" />
                   </div>
                   <p className="text-xs text-slate-400">
-                    {variantLabel(item)} &middot; {item.quantity} &times; <PriceTag amount={item.unitPriceSnapshot} />
+                    {item.variantLabelSnapshot || "Standard"} &middot; {item.quantity} &times;{" "}
+                    <PriceTag amount={item.unitPriceSnapshot} />
                   </p>
                 </div>
               ))}

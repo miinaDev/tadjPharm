@@ -6,6 +6,7 @@ import { CatalogPage } from "./pages/public/CatalogPage";
 import { ProductDetailPage } from "./pages/public/ProductDetailPage";
 import { OrderConfirmationPage } from "./pages/public/OrderConfirmationPage";
 import { LoginPage } from "./pages/admin/LoginPage";
+import { DashboardPage } from "./pages/admin/DashboardPage";
 import { ProductListPage } from "./pages/admin/ProductListPage";
 import { ProductCreatePage } from "./pages/admin/ProductCreatePage";
 import { ProductEditPage } from "./pages/admin/ProductEditPage";
@@ -32,7 +33,7 @@ function App() {
           </RequireAdmin>
         }
       >
-        <Route index element={<OrdersPage />} />
+        <Route index element={<DashboardPage />} />
         <Route path="commandes" element={<OrdersPage />} />
         <Route path="produits" element={<ProductListPage />} />
         <Route path="produits/nouveau" element={<ProductCreatePage />} />

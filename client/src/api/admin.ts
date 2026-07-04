@@ -1,10 +1,12 @@
 import { apiClient } from "./client";
-import type { AdminUser, Order, OrderStatus, Product, ProductVariant, Wilaya } from "../types";
+import type { AdminUser, DashboardStats, DeliveryBureau, Order, OrderStatus, Product, ProductVariant, Wilaya } from "../types";
 
 export interface CreateProductPayload {
   name: string;
   description: string;
   basePrice: number;
+  discountPercent?: number;
+  ribbonLabel?: string | null;
   categoryId: string;
   hasColors: boolean;
   hasSizes: boolean;
@@ -19,6 +21,8 @@ export interface UpdateProductPayload {
   name?: string;
   description?: string;
   basePrice?: number;
+  discountPercent?: number;
+  ribbonLabel?: string | null;
   categoryId?: string;
   isActive?: boolean;
 }
@@ -37,7 +41,17 @@ export const adminAuthApi = {
 };
 
 export const adminProductsApi = {
-  list: (page = 1, pageSize = 50) => apiClient.get<{ products: Product[]; total: number }>(`/api/admin/products?page=${page}&pageSize=${pageSize}`),
+  list: (params: { page?: number; pageSize?: number; search?: string; status?: "active" | "inactive" } = {}) => {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.pageSize) query.set("pageSize", String(params.pageSize));
+    if (params.search) query.set("search", params.search);
+    if (params.status) query.set("status", params.status);
+    const qs = query.toString();
+    return apiClient.get<{ products: Product[]; total: number; activeCount: number; inactiveCount: number }>(
+      `/api/admin/products${qs ? `?${qs}` : ""}`
+    );
+  },
   get: (id: string) => apiClient.get<Product>(`/api/admin/products/${id}`),
   create: (payload: CreateProductPayload) => apiClient.post<Product>("/api/admin/products", payload),
   update: (id: string, payload: UpdateProductPayload) => apiClient.put<Product>(`/api/admin/products/${id}`, payload),
@@ -46,6 +60,8 @@ export const adminProductsApi = {
     apiClient.post<Product>(`/api/admin/products/${productId}/options`, { type, label, hexCode }),
   removeOption: (productId: string, type: "color" | "size" | "volume", optionId: string) =>
     apiClient.delete<Product>(`/api/admin/products/${productId}/options/${type}/${optionId}`),
+  updateColor: (productId: string, colorId: string, payload: { hexCode?: string; label?: string }) =>
+    apiClient.put<Product>(`/api/admin/products/${productId}/colors/${colorId}`, payload),
   createVariant: (
     productId: string,
     payload: { colorId?: string | null; sizeId?: string | null; volumeId?: string | null; stockQuantity: number; priceOverride?: number | null }
@@ -76,8 +92,20 @@ export const adminOrdersApi = {
 
 export const adminWilayasApi = {
   list: () => apiClient.get<Wilaya[]>("/api/admin/wilayas"),
-  update: (id: number, payload: { deliveryPrice?: number; isActive?: boolean }) =>
+  catalog: () => apiClient.get<{ id: number; name: string }[]>("/api/admin/wilayas/catalog"),
+  create: (payload: { id?: number; name?: string }) => apiClient.post<Wilaya>("/api/admin/wilayas", payload),
+  update: (id: number, payload: { homePrice?: number; officePrice?: number; isActive?: boolean }) =>
     apiClient.put<Wilaya>(`/api/admin/wilayas/${id}`, payload),
+  remove: (id: number) => apiClient.delete<void>(`/api/admin/wilayas/${id}`),
+  createBureau: (wilayaId: number, name: string) =>
+    apiClient.post<DeliveryBureau>(`/api/admin/wilayas/${wilayaId}/bureaus`, { name }),
+  updateBureau: (bureauId: string, payload: { name?: string; isActive?: boolean }) =>
+    apiClient.put<DeliveryBureau>(`/api/admin/bureaus/${bureauId}`, payload),
+  deleteBureau: (bureauId: string) => apiClient.delete<void>(`/api/admin/bureaus/${bureauId}`),
+};
+
+export const adminStatsApi = {
+  get: () => apiClient.get<DashboardStats>("/api/admin/stats"),
 };
 
 export const adminImportApi = {

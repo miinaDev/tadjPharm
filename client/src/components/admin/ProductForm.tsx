@@ -2,11 +2,13 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useCategories } from "../../hooks/useCatalog";
 import { TagListInput } from "./TagListInput";
+import { ColorListInput, type ColorValue } from "./ColorListInput";
 import { ImagePicker } from "./ImagePicker";
 import { Card, CardBody, CardHeader } from "../ui/Card";
 import { Field, Input, Select, Textarea } from "../ui/Field";
 import { Switch } from "../ui/Switch";
 import { Button } from "../ui/Button";
+import { discountedPrice } from "../../utils/pricing";
 import type { CreateProductPayload } from "../../api/admin";
 
 interface ProductFormProps {
@@ -22,11 +24,13 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [basePrice, setBasePrice] = useState("");
+  const [discountPercent, setDiscountPercent] = useState("0");
+  const [ribbonLabel, setRibbonLabel] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [hasColors, setHasColors] = useState(false);
   const [hasSizes, setHasSizes] = useState(false);
   const [hasVolumes, setHasVolumes] = useState(false);
-  const [colors, setColors] = useState<string[]>([]);
+  const [colors, setColors] = useState<ColorValue[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [volumes, setVolumes] = useState<string[]>([]);
   const [initialStock, setInitialStock] = useState("0");
@@ -34,12 +38,16 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
 
   const hasAnyOption = hasColors || hasSizes || hasVolumes;
 
+  const priceNum = Number(basePrice);
+  const discountNum = Number(discountPercent) || 0;
+  const reducedPreview = priceNum > 0 && discountNum > 0 ? discountedPrice(priceNum, discountNum) : null;
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
     const price = Number(basePrice);
-    if (!name || !description || !categoryId || Number.isNaN(price) || price <= 0) {
+    if (!name || !categoryId || Number.isNaN(price) || price <= 0) {
       setError("Veuillez remplir tous les champs obligatoires");
       return;
     }
@@ -48,11 +56,13 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
       name,
       description,
       basePrice: price,
+      discountPercent: Number(discountPercent) || 0,
+      ribbonLabel: ribbonLabel.trim() || null,
       categoryId,
       hasColors,
       hasSizes,
       hasVolumes,
-      colors: colors.map((label) => ({ label })),
+      colors: colors.map((c) => ({ label: c.label, hexCode: c.hexCode })),
       sizes: sizes.map((label) => ({ label })),
       volumes: volumes.map((label) => ({ label })),
       initialStock: hasAnyOption ? 0 : Number(initialStock) || 0,
@@ -68,10 +78,9 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
             <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Cannes anglaises reglables" />
           </Field>
 
-          <Field label="Description" htmlFor="description" required>
+          <Field label="Description" htmlFor="description" hint="Optionnel">
             <Textarea
               id="description"
-              required
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -79,10 +88,26 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Prix (DA)" htmlFor="price" required>
               <Input id="price" required type="number" min={0} value={basePrice} onChange={(e) => setBasePrice(e.target.value)} />
             </Field>
+            <Field label="Taux de reduction (%)" htmlFor="discount" hint="0 = pas de promo">
+              <Input
+                id="discount"
+                type="number"
+                min={0}
+                max={100}
+                value={discountPercent}
+                onChange={(e) => setDiscountPercent(e.target.value)}
+              />
+            </Field>
+            <Field label="Prix reduit (DA)" htmlFor="reduced" hint="Calcule automatiquement">
+              <Input id="reduced" type="text" disabled value={reducedPreview != null ? reducedPreview.toLocaleString("fr-FR") : "—"} />
+            </Field>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Categorie" htmlFor="category" required>
               <Select id="category" required value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
                 <option value="">Selectionner...</option>
@@ -92,6 +117,9 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
                   </option>
                 ))}
               </Select>
+            </Field>
+            <Field label="Ruban / etiquette" htmlFor="ribbon" hint="Laisser vide pour aucun ruban">
+              <Input id="ribbon" type="text" maxLength={30} value={ribbonLabel} onChange={(e) => setRibbonLabel(e.target.value)} placeholder="Ex: Promo, Nouveaute" />
             </Field>
           </div>
         </CardBody>
@@ -104,7 +132,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
             <Switch checked={hasColors} onChange={setHasColors} label="Couleurs" description="Le client choisit une couleur" />
             {hasColors && (
               <div className="mt-2">
-                <TagListInput values={colors} onChange={setColors} placeholder="Ajouter une couleur..." />
+                <ColorListInput values={colors} onChange={setColors} placeholder="Ajouter une couleur..." />
               </div>
             )}
           </div>

@@ -13,6 +13,7 @@ import { Switch } from "../../components/ui/Switch";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { IconCheck } from "../../components/ui/icons";
+import { discountedPrice } from "../../utils/pricing";
 
 const PRODUCT_INFO_FORM_ID = "product-info-form";
 
@@ -27,6 +28,8 @@ export function ProductEditPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [basePrice, setBasePrice] = useState("");
+  const [discountPercent, setDiscountPercent] = useState("0");
+  const [ribbonLabel, setRibbonLabel] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [saved, setSaved] = useState(false);
@@ -36,6 +39,8 @@ export function ProductEditPage() {
       setName(product.name);
       setDescription(product.description);
       setBasePrice(String(product.basePrice));
+      setDiscountPercent(String(product.discountPercent));
+      setRibbonLabel(product.ribbonLabel ?? "");
       setCategoryId(product.categoryId);
       setIsActive(product.isActive);
     }
@@ -48,6 +53,8 @@ export function ProductEditPage() {
       name,
       description,
       basePrice: Number(basePrice),
+      discountPercent: Number(discountPercent) || 0,
+      ribbonLabel: ribbonLabel.trim() || null,
       categoryId,
       isActive,
     });
@@ -61,6 +68,10 @@ export function ProductEditPage() {
       </div>
     );
   }
+
+  const priceNum = Number(basePrice);
+  const discountNum = Number(discountPercent) || 0;
+  const reducedPreview = priceNum > 0 && discountNum > 0 ? discountedPrice(priceNum, discountNum) : null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -78,13 +89,29 @@ export function ProductEditPage() {
             <Field label="Nom du produit" htmlFor="edit-name" required>
               <Input id="edit-name" required value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
-            <Field label="Description" htmlFor="edit-description" required>
-              <Textarea id="edit-description" required rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Field label="Description" htmlFor="edit-description" hint="Optionnel">
+              <Textarea id="edit-description" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
             </Field>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-3">
               <Field label="Prix (DA)" htmlFor="edit-price" required>
                 <Input id="edit-price" required type="number" min={0} value={basePrice} onChange={(e) => setBasePrice(e.target.value)} />
               </Field>
+              <Field label="Taux de reduction (%)" htmlFor="edit-discount" hint="0 = pas de promo">
+                <Input
+                  id="edit-discount"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(e.target.value)}
+                />
+              </Field>
+              <Field label="Prix reduit (DA)" htmlFor="edit-reduced" hint="Calcule automatiquement">
+                <Input id="edit-reduced" type="text" disabled value={reducedPreview != null ? reducedPreview.toLocaleString("fr-FR") : "—"} />
+              </Field>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Categorie" htmlFor="edit-category" required>
                 <Select id="edit-category" required value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
                   {categories?.map((c) => (
@@ -93,6 +120,9 @@ export function ProductEditPage() {
                     </option>
                   ))}
                 </Select>
+              </Field>
+              <Field label="Ruban / etiquette" htmlFor="edit-ribbon" hint="Laisser vide pour aucun ruban">
+                <Input id="edit-ribbon" type="text" maxLength={30} value={ribbonLabel} onChange={(e) => setRibbonLabel(e.target.value)} placeholder="Ex: Promo, Nouveaute" />
               </Field>
             </div>
 

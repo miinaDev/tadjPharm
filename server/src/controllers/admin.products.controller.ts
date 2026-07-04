@@ -4,6 +4,7 @@ import {
   addOptionSchema,
   createProductSchema,
   createVariantSchema,
+  updateColorSchema,
   updateProductSchema,
   updateVariantSchema,
 } from "../validators/product.validator";
@@ -12,7 +13,11 @@ import { HttpError } from "../middleware/errorHandler";
 export async function listProducts(req: Request, res: Response) {
   const page = Number(req.query.page ?? 1);
   const pageSize = Number(req.query.pageSize ?? 20);
-  const result = await productService.listAdminProducts({ page, pageSize });
+  const search =
+    typeof req.query.search === "string" && req.query.search.trim() ? req.query.search.trim() : undefined;
+  const statusParam = req.query.status;
+  const status = statusParam === "active" || statusParam === "inactive" ? statusParam : undefined;
+  const result = await productService.listAdminProducts({ page, pageSize, search, status });
   res.json(result);
 }
 
@@ -50,6 +55,12 @@ export async function removeOption(req: Request, res: Response) {
     throw new HttpError(400, "Type d'option invalide");
   }
   const product = await productService.removeOption(req.params.id, type, req.params.optionId);
+  res.json(product);
+}
+
+export async function updateColor(req: Request, res: Response) {
+  const input = updateColorSchema.parse(req.body);
+  const product = await productService.updateColor(req.params.id, req.params.colorId, input);
   res.json(product);
 }
 

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { Product } from "../../types";
-import { useAddOption, useRemoveOption } from "../../hooks/useAdminProducts";
+import { useAddOption, useRemoveOption, useUpdateColor } from "../../hooks/useAdminProducts";
+import { ColorSwatchPicker } from "./ColorSwatchPicker";
+import { guessColor, DEFAULT_SWATCH } from "../../utils/colors";
 import { Card, CardBody, CardHeader } from "../ui/Card";
 import { IconPlus } from "../ui/icons";
 
@@ -22,13 +24,14 @@ function optionsFor(product: Product, type: OptionType) {
 function OptionGroup({ product, type }: { product: Product; type: OptionType }) {
   const addOption = useAddOption(product.id);
   const removeOption = useRemoveOption(product.id);
+  const updateColor = useUpdateColor(product.id);
   const [draft, setDraft] = useState("");
   const values = optionsFor(product, type);
 
   async function handleAdd() {
     const label = draft.trim();
     if (!label) return;
-    await addOption.mutateAsync({ type, label });
+    await addOption.mutateAsync(type === "color" ? { type, label, hexCode: guessColor(label) } : { type, label });
     setDraft("");
   }
 
@@ -36,18 +39,38 @@ function OptionGroup({ product, type }: { product: Product; type: OptionType }) 
     <div>
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{LABELS[type]}</p>
       <div className="flex flex-wrap items-center gap-1.5">
-        {values.map((opt) => (
-          <span key={opt.id} className="flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-            {opt.label}
-            <button
-              type="button"
-              onClick={() => removeOption.mutate({ type, optionId: opt.id })}
-              className="text-slate-400 hover:text-red-600"
-            >
-              &times;
-            </button>
-          </span>
-        ))}
+        {type === "color"
+          ? product.colors.map((opt) => (
+              <span key={opt.id} className="flex items-center gap-1.5 rounded-full bg-slate-100 py-1 pl-1 pr-2 text-xs font-medium text-slate-700">
+                <ColorSwatchPicker
+                  size="sm"
+                  hex={opt.hexCode ?? DEFAULT_SWATCH}
+                  title={`Couleur de ${opt.label}`}
+                  onChange={(hex) => updateColor.mutate({ colorId: opt.id, hexCode: hex })}
+                />
+                {opt.label}
+                <button
+                  type="button"
+                  onClick={() => removeOption.mutate({ type, optionId: opt.id })}
+                  className="text-slate-400 hover:text-red-600"
+                  aria-label={`Retirer ${opt.label}`}
+                >
+                  &times;
+                </button>
+              </span>
+            ))
+          : values.map((opt) => (
+              <span key={opt.id} className="flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+                {opt.label}
+                <button
+                  type="button"
+                  onClick={() => removeOption.mutate({ type, optionId: opt.id })}
+                  className="text-slate-400 hover:text-red-600"
+                >
+                  &times;
+                </button>
+              </span>
+            ))}
         <div className="flex items-center gap-1">
           <input
             value={draft}

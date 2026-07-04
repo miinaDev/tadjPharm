@@ -1,8 +1,19 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminProductsApi, type CreateProductPayload, type UpdateProductPayload } from "../api/admin";
 
-export function useAdminProducts() {
-  return useQuery({ queryKey: ["admin", "products"], queryFn: () => adminProductsApi.list() });
+export interface AdminProductsQuery {
+  page: number;
+  pageSize: number;
+  search?: string;
+  status?: "active" | "inactive";
+}
+
+export function useAdminProducts(params: AdminProductsQuery) {
+  return useQuery({
+    queryKey: ["admin", "products", params],
+    queryFn: () => adminProductsApi.list(params),
+    placeholderData: keepPreviousData,
+  });
 }
 
 export function useAdminProduct(id: string | undefined) {
@@ -62,6 +73,15 @@ export function useRemoveOption(productId: string) {
   return useMutation({
     mutationFn: ({ type, optionId }: { type: "color" | "size" | "volume"; optionId: string }) =>
       adminProductsApi.removeOption(productId, type, optionId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "product", productId] }),
+  });
+}
+
+export function useUpdateColor(productId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ colorId, ...payload }: { colorId: string; hexCode?: string; label?: string }) =>
+      adminProductsApi.updateColor(productId, colorId, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "product", productId] }),
   });
 }

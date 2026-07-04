@@ -6,6 +6,7 @@ import { OrderSummary } from "./OrderSummary";
 import { QuantityStepper } from "./QuantityStepper";
 import { PriceTag } from "../product/PriceTag";
 import { ApiError, resolveMediaUrl } from "../../api/client";
+import type { ShippingMethod } from "../../types";
 
 export interface CheckoutLine {
   variantId: string;
@@ -35,11 +36,28 @@ export function CheckoutModal({ lines, onQuantityChange, onRemove, onClose, onOr
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("HOME");
+  const [address, setAddress] = useState("");
+  const [bureauId, setBureauId] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const selectedWilaya = wilayas?.find((w) => w.id === wilayaId);
+  const bureaus = selectedWilaya?.bureaus ?? [];
+  const officeAvailable = bureaus.length > 0;
   const subtotal = lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
   const itemCount = lines.reduce((sum, l) => sum + l.quantity, 0);
+  const deliveryFee = selectedWilaya
+    ? shippingMethod === "OFFICE"
+      ? selectedWilaya.officePrice
+      : selectedWilaya.homePrice
+    : null;
+
+  function handleWilayaChange(id: number) {
+    setWilayaId(id);
+    // On repart de zero : le mode et le bureau dependent de la wilaya.
+    setShippingMethod("HOME");
+    setBureauId("");
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -52,6 +70,14 @@ export function CheckoutModal({ lines, onQuantityChange, onRemove, onClose, onOr
       setError("Votre panier est vide");
       return;
     }
+    if (shippingMethod === "HOME" && !address.trim()) {
+      setError("Veuillez saisir votre adresse complete");
+      return;
+    }
+    if (shippingMethod === "OFFICE" && !bureauId) {
+      setError("Veuillez choisir un bureau de livraison");
+      return;
+    }
     try {
       const order = await createOrder.mutateAsync({
         items: lines.map((l) => ({ variantId: l.variantId, quantity: l.quantity })),
@@ -60,6 +86,9 @@ export function CheckoutModal({ lines, onQuantityChange, onRemove, onClose, onOr
         lastName,
         email,
         phone,
+        shippingMethod,
+        address: shippingMethod === "HOME" ? address.trim() : undefined,
+        bureauId: shippingMethod === "OFFICE" ? bureauId : undefined,
       });
       onOrderPlaced?.();
       navigate(`/commande/${order.id}/confirmation`);
@@ -151,7 +180,7 @@ export function CheckoutModal({ lines, onQuantityChange, onRemove, onClose, onOr
             <select
               required
               value={wilayaId}
-              onChange={(e) => setWilayaId(Number(e.target.value))}
+              onChange={(e) => handleWilayaChange(Number(e.target.value))}
               disabled={wilayasLoading}
               className={inputClass}
             >
@@ -164,8 +193,70 @@ export function CheckoutModal({ lines, onQuantityChange, onRemove, onClose, onOr
             </select>
           </div>
 
+          {selectedWilaya && (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-slate-600">Mode de livraison</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShippingMethod("HOME")}
+                  className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
+                    shippingMethod === "HOME"
+                      ? "border-brand-400 bg-brand-50 text-brand-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                  }`}
+                >
+                  A domicile
+                </button>
+                <button
+                  type="button"
+                  disabled={!officeAvailable}
+                  onClick={() => setShippingMethod("OFFICE")}
+                  className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                    shippingMethod === "OFFICE"
+                      ? "border-brand-400 bg-brand-50 text-brand-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                  }`}
+                >
+                  Au bureau
+                </button>
+              </div>
+              {!officeAvailable && (
+                <p className="mt-1.5 text-xs text-slate-400">Retrait au bureau non disponible pour cette wilaya.</p>
+              )}
+            </div>
+          )}
+
+          {selectedWilaya && shippingMethod === "HOME" && (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-slate-600">Adresse complete</label>
+              <textarea
+                required
+                rows={2}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Rue, quartier, ville..."
+                className={inputClass}
+              />
+            </div>
+          )}
+
+          {selectedWilaya && shippingMethod === "OFFICE" && (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-slate-600">Bureau de livraison</label>
+              <select required value={bureauId} onChange={(e) => setBureauId(e.target.value)} className={inputClass}>
+                <option value="">Choisir un bureau...</option>
+                {bureaus.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="mt-1">
-            <OrderSummary subtotal={subtotal} itemCount={itemCount} deliveryFee={selectedWilaya?.deliveryPrice ?? null} />
+            <OrderSummary subtotal={subtotal} itemCount={itemCount} deliveryFee={deliveryFee} />
           </div>
 
           {error && <p className="text-sm text-red-500">{error}</p>}

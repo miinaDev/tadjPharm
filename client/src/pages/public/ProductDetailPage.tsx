@@ -9,6 +9,7 @@ import { PriceTag } from "../../components/product/PriceTag";
 import { CheckoutModal, type CheckoutLine } from "../../components/order/CheckoutModal";
 import { Spinner } from "../../components/common/Spinner";
 import { EmptyState } from "../../components/common/EmptyState";
+import { discountedPrice, hasPromo } from "../../utils/pricing";
 import type { Product, ProductVariant } from "../../types";
 
 function variantLabel(variant: ProductVariant) {
@@ -60,7 +61,9 @@ export function ProductDetailPage() {
     return <EmptyState title="Produit introuvable" description="Ce produit n'est plus disponible." />;
   }
 
-  const price = selectedVariant?.priceOverride ?? product.basePrice;
+  const regular = selectedVariant?.priceOverride ?? product.basePrice;
+  const promo = hasPromo(product);
+  const price = discountedPrice(regular, product.discountPercent); // prix effectif (panier + checkout)
   const canBuy = Boolean(selectedVariant && selectedVariant.stockQuantity > 0);
   const maxQuantity = Math.max(1, selectedVariant?.stockQuantity ?? 1);
   const hasOptions = product.hasColors || product.hasSizes || product.hasVolumes;
@@ -90,14 +93,28 @@ export function ProductDetailPage() {
 
         <div className="flex flex-col gap-6 rounded-3xl bg-white p-6 shadow-sm sm:p-7">
           <div>
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-brand-500">{product.category.name}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-brand-500">{product.category.name}</span>
+              {product.ribbonLabel && (
+                <span className="rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-semibold text-white">{product.ribbonLabel}</span>
+              )}
+            </div>
             <div className="mt-1.5 flex items-start justify-between gap-4">
               <h1 className="text-2xl font-bold leading-tight text-slate-900">{product.name}</h1>
-              <PriceTag amount={price} className="shrink-0 text-2xl font-bold text-slate-900" />
+              {promo ? (
+                <div className="flex shrink-0 flex-col items-end leading-tight">
+                  <PriceTag amount={regular} className="text-sm text-slate-400 line-through" />
+                  <PriceTag amount={price} className="text-2xl font-bold text-brand-600" />
+                </div>
+              ) : (
+                <PriceTag amount={price} className="shrink-0 text-2xl font-bold text-slate-900" />
+              )}
             </div>
           </div>
 
-          <p className="whitespace-pre-line text-sm leading-relaxed text-slate-500">{product.description}</p>
+          {product.description && (
+            <p className="whitespace-pre-line text-sm leading-relaxed text-slate-500">{product.description}</p>
+          )}
 
           {hasOptions && (
             <VariantSelector

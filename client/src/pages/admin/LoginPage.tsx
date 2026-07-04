@@ -15,7 +15,7 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (!loading && admin) {
-    const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? "/admin/commandes";
+    const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? "/admin";
     return <Navigate to={from} replace />;
   }
 
@@ -25,7 +25,7 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate("/admin/commandes");
+      navigate("/admin");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Connexion impossible");
     } finally {

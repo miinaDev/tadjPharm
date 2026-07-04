@@ -11,7 +11,7 @@ interface OrderTableProps {
 
 function productSummary(order: Order) {
   if (order.items.length === 0) return "-";
-  const first = order.items[0].variant.product.name;
+  const first = order.items[0].productNameSnapshot || order.items[0].variant?.product?.name || "Produit supprime";
   if (order.items.length === 1) return first;
   return `${first} +${order.items.length - 1} autre${order.items.length > 2 ? "s" : ""}`;
 }
@@ -51,7 +51,7 @@ export function OrderTable({ orders, onStatusChange, onRowClick }: OrderTablePro
                 <p className="text-xs text-slate-400">{order.phone}</p>
               </td>
               <td className="px-4 py-3 text-slate-600">{productSummary(order)}</td>
-              <td className="px-4 py-3 text-slate-600">{order.wilaya.name}</td>
+              <td className="px-4 py-3 text-slate-600">{order.wilayaNameSnapshot || order.wilaya?.name || "-"}</td>
               <td className="px-4 py-3 font-medium text-slate-900">
                 <PriceTag amount={order.totalSnapshot} />
               </td>

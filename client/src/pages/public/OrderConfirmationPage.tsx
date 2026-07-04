@@ -40,7 +40,7 @@ export function OrderConfirmationPage() {
           {order.items.map((item) => (
             <div key={item.id} className="flex justify-between gap-2">
               <span className="text-slate-700">
-                {item.variant.product.name} &times; {item.quantity}
+                {item.productNameSnapshot || item.variant?.product?.name} &times; {item.quantity}
               </span>
               <PriceTag amount={item.unitPriceSnapshot * item.quantity} className="font-medium text-slate-800" />
             </div>
@@ -54,7 +54,15 @@ export function OrderConfirmationPage() {
         </div>
         <div className="mt-1 flex justify-between text-slate-500">
           <span>Wilaya</span>
-          <span className="text-slate-700">{order.wilaya.name}</span>
+          <span className="text-slate-700">{order.wilayaNameSnapshot || order.wilaya?.name}</span>
+        </div>
+        <div className="mt-1 flex justify-between gap-4 text-slate-500">
+          <span>Livraison</span>
+          <span className="text-right text-slate-700">
+            {order.shippingMethod === "OFFICE"
+              ? `Bureau : ${order.bureau?.name ?? order.bureauNameSnapshot ?? "-"}`
+              : `A domicile - ${order.address}`}
+          </span>
         </div>
         <div className="mt-3 flex justify-between border-t border-slate-100 pt-3 text-base font-bold text-slate-900">
           <span>Total</span>

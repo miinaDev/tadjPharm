@@ -2,8 +2,10 @@ import { z } from "zod";
 
 export const createProductSchema = z.object({
   name: z.string().trim().min(1).max(200),
-  description: z.string().trim().min(1),
+  description: z.string().trim().default(""),
   basePrice: z.number().positive(),
+  discountPercent: z.number().int().min(0).max(100).default(0),
+  ribbonLabel: z.string().trim().max(30).nullable().optional(),
   categoryId: z.string().min(1),
   hasColors: z.boolean().default(false),
   hasSizes: z.boolean().default(false),
@@ -16,8 +18,10 @@ export const createProductSchema = z.object({
 
 export const updateProductSchema = z.object({
   name: z.string().trim().min(1).max(200).optional(),
-  description: z.string().trim().min(1).optional(),
+  description: z.string().trim().optional(),
   basePrice: z.number().positive().optional(),
+  discountPercent: z.number().int().min(0).max(100).optional(),
+  ribbonLabel: z.string().trim().max(30).nullable().optional(),
   categoryId: z.string().min(1).optional(),
   isActive: z.boolean().optional(),
 });
@@ -26,6 +30,14 @@ export const addOptionSchema = z.object({
   type: z.enum(["color", "size", "volume"]),
   label: z.string().trim().min(1),
   hexCode: z.string().optional(),
+});
+
+export const updateColorSchema = z.object({
+  hexCode: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Couleur invalide")
+    .optional(),
+  label: z.string().trim().min(1).optional(),
 });
 
 export const createVariantSchema = z.object({

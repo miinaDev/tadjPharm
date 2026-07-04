@@ -40,7 +40,7 @@ export function ExcelImportForm() {
       <Card>
         <CardHeader
           title="Modele de fichier"
-          description="Colonnes attendues : nom, categorie, description, prix, stock, couleurs, tailles, volumes"
+          description="Une ligne par combinaison. Colonnes : nom, categorie, description, prix, couleur, taille, volume, stock. Repetez le nom du produit sur chaque variante (une ligne par couleur/taille/volume avec son stock) ; laissez couleur/taille/volume vides pour un produit simple."
           action={
             <a href={adminImportApi.templateUrl()}>
               <Button type="button" variant="secondary">
@@ -101,7 +101,7 @@ export function ExcelImportForm() {
             action={
               <div className="flex gap-2">
                 <Badge tone="slate">{summary.totalRows} lignes</Badge>
-                <Badge tone="green">{summary.created} crees</Badge>
+                <Badge tone="green">{summary.created} produits</Badge>
                 {summary.failed > 0 && <Badge tone="red">{summary.failed} echecs</Badge>}
               </div>
             }
