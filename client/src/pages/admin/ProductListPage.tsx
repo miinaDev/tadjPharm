@@ -203,7 +203,13 @@ export function ProductListPage() {
                           <PriceTag amount={product.basePrice} />
                         </td>
                         <td className="px-4 py-3">
-                          <Badge tone={totalStock === 0 ? "red" : totalStock <= 5 ? "amber" : "slate"}>{totalStock} unites</Badge>
+                          {product.trackStock ? (
+                            <Badge tone={totalStock === 0 ? "red" : totalStock <= product.lowStockThreshold ? "amber" : "slate"}>
+                              {totalStock} unites
+                            </Badge>
+                          ) : (
+                            <Badge tone="slate">Non suivi</Badge>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <Badge tone={product.isActive ? "green" : "slate"}>{product.isActive ? "Actif" : "Inactif"}</Badge>

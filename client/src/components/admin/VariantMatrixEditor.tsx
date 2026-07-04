@@ -12,9 +12,10 @@ function variantLabel(variant: Product["variants"][number]) {
   return parts.length > 0 ? parts.join(" / ") : "Standard";
 }
 
-function stockBadge(stock: number) {
+function stockBadge(stock: number, product: Product) {
+  if (!product.trackStock) return <Badge tone="slate">Non suivi</Badge>;
   if (stock === 0) return <Badge tone="red">Rupture</Badge>;
-  if (stock <= 5) return <Badge tone="amber">Stock bas</Badge>;
+  if (stock <= product.lowStockThreshold) return <Badge tone="amber">Stock bas</Badge>;
   return <Badge tone="green">En stock</Badge>;
 }
 
@@ -75,7 +76,7 @@ export function VariantMatrixEditor({ product }: { product: Product }) {
                 {product.variants.map((variant) => (
                   <tr key={variant.id}>
                     <td className="px-3 py-2 font-medium text-slate-800">{variantLabel(variant)}</td>
-                    <td className="px-3 py-2">{stockBadge(variant.stockQuantity)}</td>
+                    <td className="px-3 py-2">{stockBadge(variant.stockQuantity, product)}</td>
                     <td className="px-3 py-2">
                       <input
                         type="number"

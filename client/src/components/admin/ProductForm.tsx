@@ -34,6 +34,8 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
   const [sizes, setSizes] = useState<string[]>([]);
   const [volumes, setVolumes] = useState<string[]>([]);
   const [initialStock, setInitialStock] = useState("0");
+  const [trackStock, setTrackStock] = useState(true);
+  const [lowStockThreshold, setLowStockThreshold] = useState("5");
   const [error, setError] = useState<string | null>(null);
 
   const hasAnyOption = hasColors || hasSizes || hasVolumes;
@@ -52,6 +54,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
       return;
     }
 
+    const parsedThreshold = parseInt(lowStockThreshold, 10);
     await onSubmit({
       name,
       description,
@@ -66,6 +69,8 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
       sizes: sizes.map((label) => ({ label })),
       volumes: volumes.map((label) => ({ label })),
       initialStock: hasAnyOption ? 0 : Number(initialStock) || 0,
+      trackStock,
+      lowStockThreshold: Number.isNaN(parsedThreshold) ? 5 : Math.max(0, parsedThreshold),
     });
   }
 
@@ -166,6 +171,39 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
           {hasAnyOption && (
             <p className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700">
               Apres creation, ajoutez les combinaisons (ex: Rouge / M) et leur stock sur la page du produit.
+            </p>
+          )}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Suivi de stock" description="Gerez la disponibilite et les alertes de stock de ce produit" />
+        <CardBody className="flex flex-col gap-4">
+          <Switch
+            checked={trackStock}
+            onChange={setTrackStock}
+            label="Suivi de stock"
+            description="Desactivez pour un produit toujours disponible (le stock n'est pas decompte a la commande)"
+          />
+          {trackStock ? (
+            <Field
+              label="Seuil de stock bas"
+              htmlFor="low-stock"
+              hint="Une alerte apparait sur le tableau de bord des qu'une variante atteint ce niveau ou moins"
+            >
+              <Input
+                id="low-stock"
+                type="number"
+                min={0}
+                value={lowStockThreshold}
+                onChange={(e) => setLowStockThreshold(e.target.value)}
+                className="max-w-[160px]"
+              />
+            </Field>
+          ) : (
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+              Le suivi de stock est desactive : ce produit sera toujours affiche comme disponible et les commandes ne
+              decompteront pas le stock.
             </p>
           )}
         </CardBody>

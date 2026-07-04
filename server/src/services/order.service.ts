@@ -94,7 +94,8 @@ export async function createOrder(input: CreateOrderInput) {
     if (!variant || !variant.product.isActive) {
       throw new HttpError(404, "Un des produits de la commande est introuvable");
     }
-    if (variant.stockQuantity < item.quantity) {
+    // Produit sans suivi de stock : toujours disponible, on ne verifie pas la quantite.
+    if (variant.product.trackStock && variant.stockQuantity < item.quantity) {
       throw new HttpError(409, `Stock insuffisant pour ${variant.product.name}`);
     }
   }
@@ -115,6 +116,8 @@ export async function createOrder(input: CreateOrderInput) {
 
   const order = await prisma.$transaction(async (tx) => {
     for (const item of items) {
+      // Produit sans suivi de stock : rien a decrementer (disponibilite illimitee).
+      if (!variantById.get(item.variantId)!.product.trackStock) continue;
       const updated = await tx.productVariant.updateMany({
         where: { id: item.variantId, stockQuantity: { gte: item.quantity } },
         data: { stockQuantity: { decrement: item.quantity } },
@@ -204,27 +207,34 @@ export async function listAdminOrders(params: {
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {
-  const order = await prisma.order.findUnique({ where: { id }, include: { items: true } });
+  const order = await prisma.order.findUnique({
+    where: { id },
+    include: { items: { include: { variant: { include: { product: true } } } } },
+  });
   if (!order) throw new HttpError(404, "Commande introuvable");
 
   const isCancelling = status === "ANNULEE" && order.status !== "ANNULEE";
   const isUncancelling = order.status === "ANNULEE" && status !== "ANNULEE";
 
+  // On ne touche au stock que pour les produits qui en assurent le suivi.
+  const affectsStock = (item: (typeof order.items)[number]) =>
+    Boolean(item.variantId && item.variant && item.variant.product.trackStock);
+
   const updated = await prisma.$transaction(async (tx) => {
     if (isCancelling) {
       for (const item of order.items) {
         // La variante a pu etre supprimee depuis (variantId null) : plus de stock a restaurer.
-        if (!item.variantId) continue;
+        if (!affectsStock(item)) continue;
         await tx.productVariant.update({
-          where: { id: item.variantId },
+          where: { id: item.variantId! },
           data: { stockQuantity: { increment: item.quantity } },
         });
       }
     } else if (isUncancelling) {
       for (const item of order.items) {
-        if (!item.variantId) continue;
+        if (!affectsStock(item)) continue;
         await tx.productVariant.update({
-          where: { id: item.variantId },
+          where: { id: item.variantId! },
           data: { stockQuantity: { decrement: item.quantity } },
         });
       }

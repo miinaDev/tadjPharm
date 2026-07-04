@@ -14,6 +14,8 @@ export const createProductSchema = z.object({
   sizes: z.array(z.object({ label: z.string().min(1) })).default([]),
   volumes: z.array(z.object({ label: z.string().min(1) })).default([]),
   initialStock: z.number().int().min(0).default(0),
+  trackStock: z.boolean().default(true),
+  lowStockThreshold: z.number().int().min(0).max(1000).default(5),
 });
 
 export const updateProductSchema = z.object({
@@ -24,6 +26,8 @@ export const updateProductSchema = z.object({
   ribbonLabel: z.string().trim().max(30).nullable().optional(),
   categoryId: z.string().min(1).optional(),
   isActive: z.boolean().optional(),
+  trackStock: z.boolean().optional(),
+  lowStockThreshold: z.number().int().min(0).max(1000).optional(),
 });
 
 export const addOptionSchema = z.object({

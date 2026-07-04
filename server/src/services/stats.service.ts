@@ -7,15 +7,17 @@ export async function getDashboardStats() {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
+  // Le seuil "stock bas" est defini par produit (lowStockThreshold) et seuls les
+  // produits avec suivi de stock (trackStock) sont comptes -> requetes SQL brutes.
   const [
     newOrders,
     monthOrders,
     prevMonthOrders,
     monthAgg,
-    outOfStockCount,
-    lowStockCount,
+    outOfStockRows,
+    lowStockRows,
     recentOrders,
-    lowStockVariants,
+    lowStockIdRows,
   ] = await Promise.all([
     prisma.order.count({ where: { status: "NOUVELLE" } }),
     prisma.order.count({ where: { createdAt: { gte: startOfMonth } } }),
@@ -25,16 +27,43 @@ export async function getDashboardStats() {
       _avg: { totalSnapshot: true },
       where: { createdAt: { gte: startOfMonth }, status: { not: "ANNULEE" } },
     }),
-    prisma.productVariant.count({ where: { stockQuantity: 0, product: { isActive: true } } }),
-    prisma.productVariant.count({ where: { stockQuantity: { gte: 1, lte: 5 }, product: { isActive: true } } }),
+    prisma.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(*)::bigint AS count
+      FROM "ProductVariant" v
+      JOIN "Product" p ON p.id = v."productId"
+      WHERE p."isActive" = true AND p."trackStock" = true AND v."stockQuantity" = 0
+    `,
+    prisma.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(*)::bigint AS count
+      FROM "ProductVariant" v
+      JOIN "Product" p ON p.id = v."productId"
+      WHERE p."isActive" = true AND p."trackStock" = true
+        AND v."stockQuantity" >= 1 AND v."stockQuantity" <= p."lowStockThreshold"
+    `,
     getRecentOrders(8),
-    prisma.productVariant.findMany({
-      where: { stockQuantity: { lte: 5 }, product: { isActive: true } },
-      include: { product: true, color: true, size: true, volume: true },
-      orderBy: { stockQuantity: "asc" },
-      take: 12,
-    }),
+    prisma.$queryRaw<{ id: string }[]>`
+      SELECT v.id
+      FROM "ProductVariant" v
+      JOIN "Product" p ON p.id = v."productId"
+      WHERE p."isActive" = true AND p."trackStock" = true
+        AND v."stockQuantity" <= p."lowStockThreshold"
+      ORDER BY v."stockQuantity" ASC
+      LIMIT 12
+    `,
   ]);
+
+  const outOfStockCount = Number(outOfStockRows[0]?.count ?? 0);
+  const lowStockCount = Number(lowStockRows[0]?.count ?? 0);
+
+  // On recharge les variantes listees avec leurs libelles (couleur/taille/volume).
+  const lowStockIds = lowStockIdRows.map((r) => r.id);
+  const lowStockVariants = lowStockIds.length
+    ? await prisma.productVariant.findMany({
+        where: { id: { in: lowStockIds } },
+        include: { product: true, color: true, size: true, volume: true },
+      })
+    : [];
+  lowStockVariants.sort((a, b) => a.stockQuantity - b.stockQuantity);
 
   return {
     newOrders,

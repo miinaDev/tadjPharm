@@ -26,7 +26,8 @@ function buildCartItem(product: Product, variant: ProductVariant, unitPrice: num
     variantLabel: variantLabel(variant),
     imageUrl: product.images[0]?.url ?? null,
     unitPrice,
-    maxStock: variant.stockQuantity,
+    // Produit sans suivi de stock : disponibilite illimitee (plafond haut arbitraire).
+    maxStock: product.trackStock ? variant.stockQuantity : 999,
   };
 }
 
@@ -43,11 +44,12 @@ export function ProductDetailPage() {
 
   useEffect(() => {
     if (selectedVariant) {
-      setQuantity((q) => Math.min(Math.max(q, 1), Math.max(selectedVariant.stockQuantity, 1)));
+      const cap = product && !product.trackStock ? 99 : Math.max(selectedVariant.stockQuantity, 1);
+      setQuantity((q) => Math.min(Math.max(q, 1), cap));
     } else {
       setQuantity(1);
     }
-  }, [selectedVariant]);
+  }, [selectedVariant, product]);
 
   if (isLoading) {
     return (
@@ -64,8 +66,9 @@ export function ProductDetailPage() {
   const regular = selectedVariant?.priceOverride ?? product.basePrice;
   const promo = hasPromo(product);
   const price = discountedPrice(regular, product.discountPercent); // prix effectif (panier + checkout)
-  const canBuy = Boolean(selectedVariant && selectedVariant.stockQuantity > 0);
-  const maxQuantity = Math.max(1, selectedVariant?.stockQuantity ?? 1);
+  // Sans suivi de stock, le produit est toujours achetable (des qu'une variante est choisie).
+  const canBuy = Boolean(selectedVariant && (!product.trackStock || selectedVariant.stockQuantity > 0));
+  const maxQuantity = product.trackStock ? Math.max(1, selectedVariant?.stockQuantity ?? 1) : 99;
   const hasOptions = product.hasColors || product.hasSizes || product.hasVolumes;
 
   const checkoutLine: CheckoutLine[] = selectedVariant
@@ -128,13 +131,13 @@ export function ProductDetailPage() {
             <p className="mb-3 text-sm font-semibold text-slate-800">Quantite</p>
             <div className="flex items-center gap-4">
               <QuantityStepper quantity={quantity} max={maxQuantity} onChange={setQuantity} />
-              {selectedVariant && selectedVariant.stockQuantity > 0 && (
+              {product.trackStock && selectedVariant && selectedVariant.stockQuantity > 0 && (
                 <span className="text-xs text-slate-400">{selectedVariant.stockQuantity} en stock</span>
               )}
             </div>
           </div>
 
-          {selectedVariant && selectedVariant.stockQuantity === 0 && (
+          {product.trackStock && selectedVariant && selectedVariant.stockQuantity === 0 && (
             <p className="text-sm font-medium text-red-500">Rupture de stock pour cette combinaison</p>
           )}
 

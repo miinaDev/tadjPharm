@@ -38,11 +38,22 @@ async function generateUniqueSlug(name: string) {
 }
 
 export async function listPublicProducts(params: { categorySlug?: string; search?: string }) {
+  // La recherche porte sur le nom du produit ET le nom de la categorie (comme cote admin).
+  const searchFilter: Prisma.ProductWhereInput = params.search
+    ? {
+        OR: [
+          { name: { contains: params.search, mode: "insensitive" } },
+          { category: { name: { contains: params.search, mode: "insensitive" } } },
+        ],
+      }
+    : {};
   const products = await prisma.product.findMany({
     where: {
-      isActive: true,
-      category: params.categorySlug ? { slug: params.categorySlug } : undefined,
-      name: params.search ? { contains: params.search, mode: "insensitive" } : undefined,
+      AND: [
+        { isActive: true },
+        params.categorySlug ? { category: { slug: params.categorySlug } } : {},
+        searchFilter,
+      ],
     },
     include: PRODUCT_INCLUDE,
     orderBy: { createdAt: "desc" },
@@ -117,6 +128,8 @@ export async function createProduct(input: CreateProductInput) {
         hasColors: input.hasColors,
         hasSizes: input.hasSizes,
         hasVolumes: input.hasVolumes,
+        trackStock: input.trackStock,
+        lowStockThreshold: input.lowStockThreshold,
       },
     });
 

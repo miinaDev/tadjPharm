@@ -32,6 +32,8 @@ export function ProductEditPage() {
   const [ribbonLabel, setRibbonLabel] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [trackStock, setTrackStock] = useState(true);
+  const [lowStockThreshold, setLowStockThreshold] = useState("5");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -43,12 +45,15 @@ export function ProductEditPage() {
       setRibbonLabel(product.ribbonLabel ?? "");
       setCategoryId(product.categoryId);
       setIsActive(product.isActive);
+      setTrackStock(product.trackStock);
+      setLowStockThreshold(String(product.lowStockThreshold));
     }
   }, [product]);
 
   async function handleSave(e: FormEvent) {
     e.preventDefault();
     setSaved(false);
+    const parsedThreshold = parseInt(lowStockThreshold, 10);
     await updateProduct.mutateAsync({
       name,
       description,
@@ -57,6 +62,8 @@ export function ProductEditPage() {
       ribbonLabel: ribbonLabel.trim() || null,
       categoryId,
       isActive,
+      trackStock,
+      lowStockThreshold: Number.isNaN(parsedThreshold) ? 5 : Math.max(0, parsedThreshold),
     });
     setSaved(true);
   }
@@ -128,6 +135,31 @@ export function ProductEditPage() {
 
             <div className="border-t border-slate-100 pt-4">
               <Switch checked={isActive} onChange={setIsActive} label="Produit actif" description="Visible sur le site public" />
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-slate-100 pt-4">
+              <Switch
+                checked={trackStock}
+                onChange={setTrackStock}
+                label="Suivi de stock"
+                description="Desactivez pour un produit toujours disponible (le stock n'est pas decompte a la commande)"
+              />
+              {trackStock && (
+                <Field
+                  label="Seuil de stock bas"
+                  htmlFor="edit-low-stock"
+                  hint="Une alerte apparait sur le tableau de bord des qu'une variante atteint ce niveau ou moins"
+                >
+                  <Input
+                    id="edit-low-stock"
+                    type="number"
+                    min={0}
+                    value={lowStockThreshold}
+                    onChange={(e) => setLowStockThreshold(e.target.value)}
+                    className="max-w-[160px]"
+                  />
+                </Field>
+              )}
             </div>
           </form>
         </CardBody>

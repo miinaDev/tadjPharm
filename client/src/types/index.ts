@@ -51,6 +51,8 @@ export interface Product {
   hasColors: boolean;
   hasSizes: boolean;
   hasVolumes: boolean;
+  trackStock: boolean;
+  lowStockThreshold: number;
   categoryId: string;
   category: Category;
   images: ProductImage[];

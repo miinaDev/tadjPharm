@@ -15,6 +15,8 @@ export interface CreateProductPayload {
   sizes: { label: string }[];
   volumes: { label: string }[];
   initialStock: number;
+  trackStock: boolean;
+  lowStockThreshold: number;
 }
 
 export interface UpdateProductPayload {
@@ -25,6 +27,8 @@ export interface UpdateProductPayload {
   ribbonLabel?: string | null;
   categoryId?: string;
   isActive?: boolean;
+  trackStock?: boolean;
+  lowStockThreshold?: number;
 }
 
 export interface ImportSummary {
