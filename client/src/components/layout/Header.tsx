@@ -39,9 +39,9 @@ export function Header() {
               </svg>
             </button>
 
-            <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-900">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-500 text-sm font-bold text-white">T</span>
-              TadjPharm
+            <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-brand-900">
+              <img src="/logo.png" alt="Logo TadjPharm" className="h-9 w-auto" />
+              Tadj<span className="-ml-2 text-brand-500">Pharm</span>
             </Link>
           </div>
 

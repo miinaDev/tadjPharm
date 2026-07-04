@@ -1,21 +1,21 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 @theme {
-  /* Brand — periwinkle / indigo violet (matches the reference mockup) */
-  --color-brand-50: #f2f1fe;
-  --color-brand-100: #e7e4fd;
-  --color-brand-200: #d0cbfb;
-  --color-brand-300: #b1a9f6;
-  --color-brand-400: #8f84ee;
-  --color-brand-500: #6c63ff;
-  --color-brand-600: #5b50ec;
-  --color-brand-700: #4a3fc7;
-  --color-brand-800: #3d36a1;
-  --color-brand-900: #332e80;
+  /* Brand — bleu marine + azur (couleurs du logo TadjPharm) */
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #ddedfd;
+  --color-brand-200: #b9dcfc;
+  --color-brand-300: #85c3f8;
+  --color-brand-400: #4aa8f4;
+  --color-brand-500: #2492ec; /* azur du logo */
+  --color-brand-600: #1478d4;
+  --color-brand-700: #135fab;
+  --color-brand-800: #164a88; /* marine du logo */
+  --color-brand-900: #15386a; /* marine profond */
 
   /* Soft app canvas */
-  --color-canvas: #eef0f6;
+  --color-canvas: #eef2f8;
 
   --font-sans: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
