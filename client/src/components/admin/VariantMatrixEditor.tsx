@@ -28,6 +28,7 @@ export function VariantMatrixEditor({ product }: { product: Product }) {
   const [sizeId, setSizeId] = useState("");
   const [volumeId, setVolumeId] = useState("");
   const [stockQuantity, setStockQuantity] = useState("0");
+  const [priceOverride, setPriceOverride] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const hasAnyOption = product.hasColors || product.hasSizes || product.hasVolumes;
@@ -47,11 +48,13 @@ export function VariantMatrixEditor({ product }: { product: Product }) {
         sizeId: product.hasSizes ? sizeId : null,
         volumeId: product.hasVolumes ? volumeId : null,
         stockQuantity: Number(stockQuantity) || 0,
+        priceOverride: priceOverride ? Number(priceOverride) : null,
       });
       setColorId("");
       setSizeId("");
       setVolumeId("");
       setStockQuantity("0");
+      setPriceOverride("");
     } catch {
       setError("Cette combinaison existe peut-etre deja");
     }
@@ -68,6 +71,7 @@ export function VariantMatrixEditor({ product }: { product: Product }) {
                 <tr>
                   <th className="px-3 py-2">Combinaison</th>
                   <th className="px-3 py-2">Statut</th>
+                  <th className="px-3 py-2">Prix</th>
                   <th className="px-3 py-2">Stock</th>
                   <th className="px-3 py-2" />
                 </tr>
@@ -77,6 +81,23 @@ export function VariantMatrixEditor({ product }: { product: Product }) {
                   <tr key={variant.id}>
                     <td className="px-3 py-2 font-medium text-slate-800">{variantLabel(variant)}</td>
                     <td className="px-3 py-2">{stockBadge(variant.stockQuantity, product)}</td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        defaultValue={variant.priceOverride ?? ""}
+                        placeholder={`${product.basePrice} (prix de base)`}
+                        onBlur={(e) => {
+                          const raw = e.target.value;
+                          const value = raw === "" ? null : Number(raw);
+                          if (value !== variant.priceOverride && !(value !== null && Number.isNaN(value))) {
+                            updateVariant.mutate({ variantId: variant.id, priceOverride: value });
+                          }
+                        }}
+                        className="w-28 rounded-md border border-slate-200 px-2 py-1 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/10"
+                      />
+                    </td>
                     <td className="px-3 py-2">
                       <input
                         type="number"
@@ -139,6 +160,15 @@ export function VariantMatrixEditor({ product }: { product: Product }) {
               ))}
             </Select>
           )}
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={priceOverride}
+            onChange={(e) => setPriceOverride(e.target.value)}
+            placeholder="Prix (optionnel)"
+            className="w-32 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10"
+          />
           <input
             type="number"
             min={0}
