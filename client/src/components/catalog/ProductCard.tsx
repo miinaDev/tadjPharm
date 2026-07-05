@@ -14,7 +14,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="relative aspect-square w-full overflow-hidden rounded-3xl bg-white shadow-sm transition group-hover:shadow-md">
         {image ? (
           <img
-            src={resolveMediaUrl(image.url)}
+            src={resolveMediaUrl(image.url, 600)}
             alt={product.name}
             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
           />

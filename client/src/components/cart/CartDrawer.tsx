@@ -48,7 +48,7 @@ export function CartDrawer() {
                     onClick={cart.closeCart}
                     className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-100"
                   >
-                    {item.imageUrl && <img src={resolveMediaUrl(item.imageUrl)} alt="" className="h-full w-full object-cover" />}
+                    {item.imageUrl && <img src={resolveMediaUrl(item.imageUrl, 160)} alt="" className="h-full w-full object-cover" />}
                   </Link>
                   <div className="flex min-w-0 flex-1 flex-col">
                     <div className="flex items-start justify-between gap-2">

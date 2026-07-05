@@ -46,9 +46,24 @@ export const apiClient = {
     request<T>(path, { method: "DELETE", body: body === undefined ? undefined : JSON.stringify(body) }),
 };
 
-export function resolveMediaUrl(url: string): string {
-  // Cloudinary renvoie une URL absolue (https://...), qu'on sert telle quelle.
-  // Le stockage disque local renvoie un chemin relatif (/uploads/...) a prefixer par l'API.
-  if (/^https?:\/\//i.test(url)) return url;
-  return `${API_URL}${url}`;
+export function resolveMediaUrl(url: string, width?: number): string {
+  // Stockage disque local (developpement) : chemin relatif a prefixer par l'API.
+  if (!/^https?:\/\//i.test(url)) return `${API_URL}${url}`;
+
+  // Cloudinary : on injecte des transformations de livraison juste apres "/upload/" pour que
+  // Cloudinary compresse (q_auto), serve un format moderne WebP/AVIF selon le navigateur (f_auto)
+  // et plafonne la largeur (w_<width>,c_limit = reduit sans jamais agrandir). La version derivee
+  // est mise en cache par Cloudinary -> bande passante divisee par ~20-40 sans perte visible.
+  const marker = "/upload/";
+  const uploadIdx = url.indexOf(marker);
+  if (url.includes("res.cloudinary.com") && uploadIdx !== -1) {
+    const rest = url.slice(uploadIdx + marker.length);
+    // Idempotence : ne rien reinjecter si une transformation est deja presente.
+    if (/^(f_auto|q_auto|w_)/.test(rest)) return url;
+    const transforms = width ? `f_auto,q_auto,w_${width},c_limit` : "f_auto,q_auto";
+    return `${url.slice(0, uploadIdx + marker.length)}${transforms}/${rest}`;
+  }
+
+  // Autre URL absolue (non Cloudinary) : servie telle quelle.
+  return url;
 }

@@ -122,7 +122,7 @@ export function CheckoutModal({ lines, onQuantityChange, onRemove, onClose, onOr
           {lines.map((line) => (
             <div key={line.variantId} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-2.5">
               <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-                {line.imageUrl && <img src={resolveMediaUrl(line.imageUrl)} alt="" className="h-full w-full object-cover" />}
+                {line.imageUrl && <img src={resolveMediaUrl(line.imageUrl, 160)} alt="" className="h-full w-full object-cover" />}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-900">{line.productName}</p>

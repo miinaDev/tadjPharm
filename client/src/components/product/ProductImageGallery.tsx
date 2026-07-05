@@ -31,7 +31,7 @@ export function ProductImageGallery({
     <div ref={rootRef} className="flex flex-col gap-3">
       <div className="aspect-square w-full overflow-hidden rounded-3xl bg-white shadow-sm">
         {active ? (
-          <img src={resolveMediaUrl(active.url)} alt={alt} className="h-full w-full object-cover" />
+          <img src={resolveMediaUrl(active.url, 1200)} alt={alt} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-sm text-slate-300">Pas d'image</div>
         )}
@@ -47,7 +47,7 @@ export function ProductImageGallery({
                 index === activeIndex ? "ring-2 ring-brand-500 ring-offset-2" : "opacity-70 hover:opacity-100"
               }`}
             >
-              <img src={resolveMediaUrl(image.url)} alt="" className="h-full w-full object-cover" />
+              <img src={resolveMediaUrl(image.url, 160)} alt="" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>

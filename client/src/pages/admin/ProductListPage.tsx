@@ -193,7 +193,7 @@ export function ProductListPage() {
                             title="Voir le detail et le stock par option"
                           >
                             <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
-                              {image && <img src={resolveMediaUrl(image.url)} alt="" className="h-full w-full object-cover" />}
+                              {image && <img src={resolveMediaUrl(image.url, 120)} alt="" className="h-full w-full object-cover" />}
                             </div>
                             <span className="font-medium text-slate-900 hover:text-brand-700">{product.name}</span>
                           </button>

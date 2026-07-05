@@ -41,7 +41,7 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
 
         <div className="flex gap-4">
           <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-            {image && <img src={resolveMediaUrl(image.url)} alt="" className="h-full w-full object-cover" />}
+            {image && <img src={resolveMediaUrl(image.url, 240)} alt="" className="h-full w-full object-cover" />}
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-slate-900">{product.name}</p>

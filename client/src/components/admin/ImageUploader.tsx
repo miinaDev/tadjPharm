@@ -46,7 +46,7 @@ export function ImageUploader({ product }: { product: Product }) {
               return (
                 <div key={image.id} className="flex flex-col gap-1.5">
                   <div className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200">
-                    <img src={resolveMediaUrl(image.url)} alt="" className="h-full w-full object-cover" />
+                    <img src={resolveMediaUrl(image.url, 400)} alt="" className="h-full w-full object-cover" />
                     {index === 0 && (
                       <span className="absolute left-1 top-1 rounded bg-slate-900/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
                         Principale
