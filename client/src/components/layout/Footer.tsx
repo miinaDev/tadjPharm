@@ -3,15 +3,15 @@ import { IconFacebook, IconInstagram, IconTiktok } from "../ui/icons";
 // Coordonnees affichees dans le footer — a remplacer par les vraies valeurs.
 // phoneHref : format international sans espaces (pour le lien tel:).
 const CONTACT = {
-  phoneHref: "+213555000000",
-  phoneLabel: "+213 555 00 00 00",
+  phoneHref: "+213562863630",
+  phoneLabel: "+213 562 863 630",
   email: "contact@tadjpharm.dz",
 };
 
 const SOCIALS = [
-  { label: "Facebook", href: "https://facebook.com/tadjpharm", Icon: IconFacebook },
-  { label: "Instagram", href: "https://instagram.com/tadjpharm", Icon: IconInstagram },
-  { label: "TikTok", href: "https://tiktok.com/@tadjpharm", Icon: IconTiktok },
+  { label: "Facebook", href: "https://www.facebook.com/tadjpharm", Icon: IconFacebook },
+  { label: "Instagram", href: "https://www.instagram.com/tadj_pharm", Icon: IconInstagram },
+  { label: "TikTok", href: "https://www.tiktok.com/@tadj_pharm", Icon: IconTiktok },
 ];
 
 function IconPhone(props: React.SVGProps<SVGSVGElement>) {
