@@ -7,6 +7,7 @@ export const createProductSchema = z.object({
   discountPercent: z.number().int().min(0).max(100).default(0),
   ribbonLabel: z.string().trim().max(30).nullable().optional(),
   categoryId: z.string().min(1),
+  subcategoryId: z.string().nullable().optional(),
   hasColors: z.boolean().default(false),
   hasSizes: z.boolean().default(false),
   hasVolumes: z.boolean().default(false),
@@ -15,7 +16,7 @@ export const createProductSchema = z.object({
   volumes: z.array(z.object({ label: z.string().min(1) })).default([]),
   initialStock: z.number().int().min(0).default(0),
   trackStock: z.boolean().default(true),
-  lowStockThreshold: z.number().int().min(0).max(1000).default(5),
+  lowStockThreshold: z.number().int().min(0).max(1000).default(0),
 });
 
 export const updateProductSchema = z.object({
@@ -25,6 +26,7 @@ export const updateProductSchema = z.object({
   discountPercent: z.number().int().min(0).max(100).optional(),
   ribbonLabel: z.string().trim().max(30).nullable().optional(),
   categoryId: z.string().min(1).optional(),
+  subcategoryId: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
   trackStock: z.boolean().optional(),
   lowStockThreshold: z.number().int().min(0).max(1000).optional(),
@@ -42,6 +44,10 @@ export const updateColorSchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/, "Couleur invalide")
     .optional(),
   label: z.string().trim().min(1).optional(),
+});
+
+export const setImageColorSchema = z.object({
+  colorId: z.string().min(1).nullable(),
 });
 
 export const createVariantSchema = z.object({

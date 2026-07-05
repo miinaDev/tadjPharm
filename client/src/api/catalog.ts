@@ -3,9 +3,10 @@ import type { Category, Product } from "../types";
 
 export const catalogApi = {
   getCategories: () => apiClient.get<Category[]>("/api/categories"),
-  getProducts: (params: { categorySlug?: string; search?: string } = {}) => {
+  getProducts: (params: { categorySlug?: string; subcategorySlug?: string; search?: string } = {}) => {
     const query = new URLSearchParams();
     if (params.categorySlug) query.set("categorySlug", params.categorySlug);
+    if (params.subcategorySlug) query.set("subcategorySlug", params.subcategorySlug);
     if (params.search) query.set("search", params.search);
     const qs = query.toString();
     return apiClient.get<Product[]>(`/api/products${qs ? `?${qs}` : ""}`);

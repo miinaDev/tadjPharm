@@ -55,7 +55,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...current, { ...item, quantity: Math.min(quantity, item.maxStock) }];
     });
-    setIsOpen(true);
+    // On n'ouvre volontairement pas le tiroir a l'ajout : le retour visuel (flash « Ajoute ✓ »
+    // sur la fiche produit + compteur du header) suffit et n'interrompt pas la navigation.
   }
 
   function updateQuantity(variantId: string, quantity: number) {

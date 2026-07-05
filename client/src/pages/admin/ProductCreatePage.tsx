@@ -24,7 +24,10 @@ export function ProductCreatePage() {
       }
     }
 
-    navigate(`/admin/produits/${product.id}`, uploadError ? { state: { imageError: uploadError } } : undefined);
+    // focusStock : demande a la page d'edition de defiler jusqu'a la section stock/variantes.
+    navigate(`/admin/produits/${product.id}`, {
+      state: { focusStock: true, ...(uploadError ? { imageError: uploadError } : {}) },
+    });
   }
 
   return (

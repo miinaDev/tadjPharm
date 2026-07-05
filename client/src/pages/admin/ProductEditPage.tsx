@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAdminProduct, useUpdateProduct } from "../../hooks/useAdminProducts";
 import { useCategories } from "../../hooks/useCatalog";
 import { Spinner } from "../../components/common/Spinner";
@@ -12,15 +12,19 @@ import { Field, Input, Select, Textarea } from "../../components/ui/Field";
 import { Switch } from "../../components/ui/Switch";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
-import { IconCheck } from "../../components/ui/icons";
 import { discountedPrice } from "../../utils/pricing";
 
 const PRODUCT_INFO_FORM_ID = "product-info-form";
 
 export function ProductEditPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const location = useLocation();
-  const imageError = (location.state as { imageError?: string } | null)?.imageError;
+  const navState = location.state as { imageError?: string; focusStock?: boolean } | null;
+  const imageError = navState?.imageError;
+  const focusStock = navState?.focusStock ?? false;
+  const stockSectionRef = useRef<HTMLDivElement>(null);
+  const scrolledToStock = useRef(false);
   const { data: product, isLoading } = useAdminProduct(id);
   const { data: categories } = useCategories();
   const updateProduct = useUpdateProduct(id ?? "");
@@ -31,10 +35,18 @@ export function ProductEditPage() {
   const [discountPercent, setDiscountPercent] = useState("0");
   const [ribbonLabel, setRibbonLabel] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [subcategoryId, setSubcategoryId] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [trackStock, setTrackStock] = useState(true);
-  const [lowStockThreshold, setLowStockThreshold] = useState("5");
-  const [saved, setSaved] = useState(false);
+  const [lowStockThreshold, setLowStockThreshold] = useState("0");
+
+  // Apres une creation, on defile automatiquement jusqu'a la section stock/variantes.
+  useEffect(() => {
+    if (focusStock && product && !scrolledToStock.current && stockSectionRef.current) {
+      scrolledToStock.current = true;
+      stockSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [focusStock, product]);
 
   useEffect(() => {
     if (product) {
@@ -44,6 +56,7 @@ export function ProductEditPage() {
       setDiscountPercent(String(product.discountPercent));
       setRibbonLabel(product.ribbonLabel ?? "");
       setCategoryId(product.categoryId);
+      setSubcategoryId(product.subcategoryId ?? "");
       setIsActive(product.isActive);
       setTrackStock(product.trackStock);
       setLowStockThreshold(String(product.lowStockThreshold));
@@ -52,7 +65,6 @@ export function ProductEditPage() {
 
   async function handleSave(e: FormEvent) {
     e.preventDefault();
-    setSaved(false);
     const parsedThreshold = parseInt(lowStockThreshold, 10);
     await updateProduct.mutateAsync({
       name,
@@ -61,11 +73,13 @@ export function ProductEditPage() {
       discountPercent: Number(discountPercent) || 0,
       ribbonLabel: ribbonLabel.trim() || null,
       categoryId,
+      subcategoryId: subcategoryId || null,
       isActive,
       trackStock,
-      lowStockThreshold: Number.isNaN(parsedThreshold) ? 5 : Math.max(0, parsedThreshold),
+      lowStockThreshold: Number.isNaN(parsedThreshold) ? 0 : Math.max(0, parsedThreshold),
     });
-    setSaved(true);
+    // Une fois enregistre, on revient a la liste de gestion des produits.
+    navigate("/admin/produits");
   }
 
   if (isLoading || !product) {
@@ -79,6 +93,8 @@ export function ProductEditPage() {
   const priceNum = Number(basePrice);
   const discountNum = Number(discountPercent) || 0;
   const reducedPreview = priceNum > 0 && discountNum > 0 ? discountedPrice(priceNum, discountNum) : null;
+  const selectedCategory = categories?.find((c) => c.id === categoryId);
+  const subcategories = selectedCategory?.subcategories ?? [];
 
   return (
     <div className="flex flex-col gap-5">
@@ -120,7 +136,15 @@ export function ProductEditPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Categorie" htmlFor="edit-category" required>
-                <Select id="edit-category" required value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+                <Select
+                  id="edit-category"
+                  required
+                  value={categoryId}
+                  onChange={(e) => {
+                    setCategoryId(e.target.value);
+                    setSubcategoryId("");
+                  }}
+                >
                   {categories?.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -128,10 +152,28 @@ export function ProductEditPage() {
                   ))}
                 </Select>
               </Field>
+              {subcategories.length > 0 ? (
+                <Field label="Sous-categorie" htmlFor="edit-subcategory" hint="Optionnel">
+                  <Select id="edit-subcategory" value={subcategoryId} onChange={(e) => setSubcategoryId(e.target.value)}>
+                    <option value="">— Aucune —</option>
+                    {subcategories.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              ) : (
+                <Field label="Ruban / etiquette" htmlFor="edit-ribbon" hint="Laisser vide pour aucun ruban">
+                  <Input id="edit-ribbon" type="text" maxLength={30} value={ribbonLabel} onChange={(e) => setRibbonLabel(e.target.value)} placeholder="Ex: Promo, Nouveaute" />
+                </Field>
+              )}
+            </div>
+            {subcategories.length > 0 && (
               <Field label="Ruban / etiquette" htmlFor="edit-ribbon" hint="Laisser vide pour aucun ruban">
                 <Input id="edit-ribbon" type="text" maxLength={30} value={ribbonLabel} onChange={(e) => setRibbonLabel(e.target.value)} placeholder="Ex: Promo, Nouveaute" />
               </Field>
-            </div>
+            )}
 
             <div className="border-t border-slate-100 pt-4">
               <Switch checked={isActive} onChange={setIsActive} label="Produit actif" description="Visible sur le site public" />
@@ -165,8 +207,10 @@ export function ProductEditPage() {
         </CardBody>
       </Card>
 
-      <ProductOptionsManager product={product} />
-      <VariantMatrixEditor product={product} />
+      <div ref={stockSectionRef} id="section-stock" className="flex scroll-mt-24 flex-col gap-5">
+        <ProductOptionsManager product={product} />
+        <VariantMatrixEditor product={product} />
+      </div>
       <ImageUploader product={product} />
 
       <Card>
@@ -174,11 +218,6 @@ export function ProductEditPage() {
           <Button type="submit" form={PRODUCT_INFO_FORM_ID} variant="primary" disabled={updateProduct.isPending}>
             {updateProduct.isPending ? "Enregistrement..." : "Enregistrer les modifications"}
           </Button>
-          {saved && (
-            <span className="flex items-center gap-1 text-sm text-green-600">
-              <IconCheck className="h-4 w-4" /> Modifications enregistrees
-            </span>
-          )}
         </CardBody>
       </Card>
     </div>

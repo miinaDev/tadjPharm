@@ -1,5 +1,17 @@
 import { apiClient } from "./client";
-import type { AdminUser, DashboardStats, DeliveryBureau, Order, OrderStatus, Product, ProductVariant, Wilaya } from "../types";
+import type {
+  AdminCategory,
+  AdminUser,
+  Category,
+  DashboardStats,
+  DeliveryBureau,
+  Order,
+  OrderStatus,
+  Product,
+  ProductVariant,
+  Subcategory,
+  Wilaya,
+} from "../types";
 
 export interface CreateProductPayload {
   name: string;
@@ -8,6 +20,7 @@ export interface CreateProductPayload {
   discountPercent?: number;
   ribbonLabel?: string | null;
   categoryId: string;
+  subcategoryId?: string | null;
   hasColors: boolean;
   hasSizes: boolean;
   hasVolumes: boolean;
@@ -26,6 +39,7 @@ export interface UpdateProductPayload {
   discountPercent?: number;
   ribbonLabel?: string | null;
   categoryId?: string;
+  subcategoryId?: string | null;
   isActive?: boolean;
   trackStock?: boolean;
   lowStockThreshold?: number;
@@ -79,6 +93,8 @@ export const adminProductsApi = {
     return apiClient.post(`/api/admin/products/${productId}/images`, formData);
   },
   deleteImage: (imageId: string) => apiClient.delete<void>(`/api/admin/images/${imageId}`),
+  setImageColor: (productId: string, imageId: string, colorId: string | null) =>
+    apiClient.put<Product>(`/api/admin/products/${productId}/images/${imageId}`, { colorId }),
 };
 
 export const adminOrdersApi = {
@@ -106,6 +122,19 @@ export const adminWilayasApi = {
   updateBureau: (bureauId: string, payload: { name?: string; isActive?: boolean }) =>
     apiClient.put<DeliveryBureau>(`/api/admin/bureaus/${bureauId}`, payload),
   deleteBureau: (bureauId: string) => apiClient.delete<void>(`/api/admin/bureaus/${bureauId}`),
+};
+
+export const adminCategoriesApi = {
+  list: () => apiClient.get<AdminCategory[]>("/api/admin/categories"),
+  create: (name: string) => apiClient.post<Category>("/api/admin/categories", { name }),
+  update: (id: string, name: string) => apiClient.put<Category>(`/api/admin/categories/${id}`, { name }),
+  remove: (id: string, password: string) =>
+    apiClient.delete<{ movedProducts: number }>(`/api/admin/categories/${id}`, { password }),
+  createSubcategory: (categoryId: string, name: string) =>
+    apiClient.post<Subcategory>(`/api/admin/categories/${categoryId}/subcategories`, { name }),
+  updateSubcategory: (subId: string, name: string) =>
+    apiClient.put<Subcategory>(`/api/admin/subcategories/${subId}`, { name }),
+  deleteSubcategory: (subId: string) => apiClient.delete<void>(`/api/admin/subcategories/${subId}`),
 };
 
 export const adminStatsApi = {

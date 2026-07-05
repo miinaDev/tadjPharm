@@ -39,8 +39,16 @@ export function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [addedFlash, setAddedFlash] = useState(false);
+  const [focusImageId, setFocusImageId] = useState<string | null>(null);
 
   const selectedVariant = product ? resolveSelectedVariant(product, selection) : undefined;
+
+  // Selectionner une couleur liee a une image demande a la galerie d'afficher cette image.
+  useEffect(() => {
+    if (!product || !selection.colorId) return;
+    const linked = product.images.find((img) => img.colorId === selection.colorId);
+    if (linked) setFocusImageId(linked.id);
+  }, [selection.colorId, product]);
 
   useEffect(() => {
     if (selectedVariant) {
@@ -92,12 +100,15 @@ export function ProductDetailPage() {
       </Link>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8">
-        <ProductImageGallery images={product.images} alt={product.name} />
+        <ProductImageGallery images={product.images} alt={product.name} focusImageId={focusImageId} />
 
         <div className="flex flex-col gap-6 rounded-3xl bg-white p-6 shadow-sm sm:p-7">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-brand-500">{product.category.name}</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-brand-500">
+                {product.category.name}
+                {product.subcategory && <span className="text-slate-400"> · {product.subcategory.name}</span>}
+              </span>
               {product.ribbonLabel && (
                 <span className="rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-semibold text-white">{product.ribbonLabel}</span>
               )}

@@ -1,13 +1,34 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ProductImage } from "../../types";
 import { resolveMediaUrl } from "../../api/client";
 
-export function ProductImageGallery({ images, alt }: { images: ProductImage[]; alt: string }) {
+export function ProductImageGallery({
+  images,
+  alt,
+  focusImageId,
+}: {
+  images: ProductImage[];
+  alt: string;
+  focusImageId?: string | null;
+}) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
   const active = images[activeIndex];
 
+  // Quand une couleur liee est selectionnee, on affiche son image et on remonte a la galerie.
+  useEffect(() => {
+    if (!focusImageId) return;
+    const idx = images.findIndex((img) => img.id === focusImageId);
+    if (idx >= 0) {
+      setActiveIndex(idx);
+      rootRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    // On ne depend que de focusImageId : eviter de re-defiler lors d'un refetch du produit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusImageId]);
+
   return (
-    <div className="flex flex-col gap-3">
+    <div ref={rootRef} className="flex flex-col gap-3">
       <div className="aspect-square w-full overflow-hidden rounded-3xl bg-white shadow-sm">
         {active ? (
           <img src={resolveMediaUrl(active.url)} alt={alt} className="h-full w-full object-cover" />

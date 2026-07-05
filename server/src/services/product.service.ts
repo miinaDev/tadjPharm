@@ -8,12 +8,21 @@ import type { CreateProductInput, CreateVariantInput, UpdateColorInput, UpdatePr
 
 const PRODUCT_INCLUDE = {
   category: true,
+  subcategory: true,
   images: { orderBy: { position: "asc" as const } },
   colors: true,
   sizes: true,
   volumes: true,
   variants: { include: { color: true, size: true, volume: true } },
 };
+
+// Verifie qu'une sous-categorie (si fournie) appartient bien a la categorie choisie.
+async function assertSubcategoryBelongsToCategory(subcategoryId: string, categoryId: string) {
+  const subcategory = await prisma.subcategory.findUnique({ where: { id: subcategoryId } });
+  if (!subcategory || subcategory.categoryId !== categoryId) {
+    throw new HttpError(400, "La sous-categorie ne correspond pas a la categorie choisie");
+  }
+}
 
 function serializeProduct(product: any) {
   return {
@@ -37,13 +46,14 @@ async function generateUniqueSlug(name: string) {
   }
 }
 
-export async function listPublicProducts(params: { categorySlug?: string; search?: string }) {
-  // La recherche porte sur le nom du produit ET le nom de la categorie (comme cote admin).
+export async function listPublicProducts(params: { categorySlug?: string; subcategorySlug?: string; search?: string }) {
+  // La recherche porte sur le nom du produit, de la categorie ET de la sous-categorie (comme cote admin).
   const searchFilter: Prisma.ProductWhereInput = params.search
     ? {
         OR: [
           { name: { contains: params.search, mode: "insensitive" } },
           { category: { name: { contains: params.search, mode: "insensitive" } } },
+          { subcategory: { name: { contains: params.search, mode: "insensitive" } } },
         ],
       }
     : {};
@@ -52,6 +62,7 @@ export async function listPublicProducts(params: { categorySlug?: string; search
       AND: [
         { isActive: true },
         params.categorySlug ? { category: { slug: params.categorySlug } } : {},
+        params.subcategorySlug ? { subcategory: { slug: params.subcategorySlug } } : {},
         searchFilter,
       ],
     },
@@ -81,6 +92,7 @@ export async function listAdminProducts(params: {
         OR: [
           { name: { contains: params.search, mode: "insensitive" } },
           { category: { name: { contains: params.search, mode: "insensitive" } } },
+          { subcategory: { name: { contains: params.search, mode: "insensitive" } } },
         ],
       }
     : {};
@@ -113,6 +125,8 @@ export async function createProduct(input: CreateProductInput) {
   const category = await prisma.category.findUnique({ where: { id: input.categoryId } });
   if (!category) throw new HttpError(400, "Categorie introuvable");
 
+  if (input.subcategoryId) await assertSubcategoryBelongsToCategory(input.subcategoryId, input.categoryId);
+
   const slug = await generateUniqueSlug(input.name);
 
   const product = await prisma.$transaction(async (tx) => {
@@ -125,6 +139,7 @@ export async function createProduct(input: CreateProductInput) {
         discountPercent: input.discountPercent,
         ribbonLabel: input.ribbonLabel?.trim() || null,
         categoryId: input.categoryId,
+        subcategoryId: input.subcategoryId ?? null,
         hasColors: input.hasColors,
         hasSizes: input.hasSizes,
         hasVolumes: input.hasVolumes,
@@ -163,6 +178,16 @@ export async function updateProduct(id: string, input: UpdateProductInput) {
   const data = { ...input };
   // Normaliser le ruban : chaine vide -> null (retire l'etiquette). Champ absent = non modifie.
   if (typeof data.ribbonLabel === "string") data.ribbonLabel = data.ribbonLabel.trim() || null;
+
+  const effectiveCategoryId = input.categoryId ?? product.categoryId;
+  if (input.subcategoryId) {
+    // Sous-categorie explicitement choisie : elle doit appartenir a la categorie effective.
+    await assertSubcategoryBelongsToCategory(input.subcategoryId, effectiveCategoryId);
+  } else if (input.categoryId && input.categoryId !== product.categoryId && input.subcategoryId === undefined) {
+    // Changement de categorie sans nouvelle sous-categorie : l'ancienne devient orpheline -> on la retire.
+    data.subcategoryId = null;
+  }
+
   await prisma.product.update({ where: { id }, data });
   return getAdminProductById(id);
 }
@@ -277,4 +302,18 @@ export async function deleteImage(imageId: string) {
 
   await prisma.productImage.delete({ where: { id: imageId } });
   await deleteStoredImage(image.filename);
+}
+
+// Rattache (ou detache si colorId = null) une image a une couleur du meme produit.
+export async function setImageColor(productId: string, imageId: string, colorId: string | null) {
+  const image = await prisma.productImage.findUnique({ where: { id: imageId } });
+  if (!image || image.productId !== productId) throw new HttpError(404, "Image introuvable");
+  if (colorId) {
+    const color = await prisma.productColor.findUnique({ where: { id: colorId } });
+    if (!color || color.productId !== productId) {
+      throw new HttpError(400, "Cette couleur n'appartient pas au produit");
+    }
+  }
+  await prisma.productImage.update({ where: { id: imageId }, data: { colorId } });
+  return getAdminProductById(productId);
 }

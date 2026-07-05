@@ -10,11 +10,27 @@ datasource db {
 // ---------- Catalogue ----------
 
 model Category {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  slug      String    @unique
-  products  Product[]
-  createdAt DateTime  @default(now())
+  id            String        @id @default(cuid())
+  name          String        @unique
+  slug          String        @unique
+  subcategories Subcategory[]
+  products      Product[]
+  createdAt     DateTime      @default(now())
+}
+
+// Sous-categorie optionnelle rattachee a une categorie (ex: "Coussin" dans "Orthopedique").
+model Subcategory {
+  id         String    @id @default(cuid())
+  categoryId String
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name       String
+  slug       String
+  products   Product[]
+  createdAt  DateTime  @default(now())
+
+  @@unique([categoryId, name])
+  @@unique([categoryId, slug])
+  @@index([categoryId])
 }
 
 model Product {
@@ -39,6 +55,9 @@ model Product {
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
+  subcategoryId String?
+  subcategory   Subcategory? @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+
   images   ProductImage[]
   colors   ProductColor[]
   sizes    ProductSize[]
@@ -49,6 +68,7 @@ model Product {
   updatedAt DateTime @updatedAt
 
   @@index([categoryId])
+  @@index([subcategoryId])
 }
 
 model ProductImage {
@@ -59,9 +79,15 @@ model ProductImage {
   url       String
   position  Int     @default(0)
 
+  // Lien optionnel vers une couleur : cliquer cette couleur cote client affiche cette image.
+  // SetNull : supprimer la couleur delie l'image sans la supprimer.
+  colorId String?
+  color   ProductColor? @relation(fields: [colorId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
 
   @@index([productId])
+  @@index([colorId])
 }
 
 // Vocabulaires d'options, définis par produit
@@ -73,6 +99,7 @@ model ProductColor {
   hexCode   String?
 
   variants ProductVariant[]
+  images   ProductImage[] // images rattachees a cette couleur (lien optionnel)
 
   @@unique([productId, label])
 }
@@ -161,6 +188,7 @@ enum OrderStatus {
   NOUVELLE
   CONFIRMEE
   EXPEDIEE
+  LIVREE
   ANNULEE
 }
 

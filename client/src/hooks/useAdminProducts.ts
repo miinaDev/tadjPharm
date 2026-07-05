@@ -127,3 +127,12 @@ export function useDeleteImage(productId: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "product", productId] }),
   });
 }
+
+export function useSetImageColor(productId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ imageId, colorId }: { imageId: string; colorId: string | null }) =>
+      adminProductsApi.setImageColor(productId, imageId, colorId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "product", productId] }),
+  });
+}

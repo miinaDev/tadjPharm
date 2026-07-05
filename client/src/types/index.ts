@@ -1,7 +1,29 @@
+export interface Subcategory {
+  id: string;
+  categoryId: string;
+  name: string;
+  slug: string;
+}
+
 export interface Category {
   id: string;
   name: string;
   slug: string;
+  // Presentes via GET /api/categories ; absentes quand la categorie est imbriquee dans un produit.
+  subcategories?: Subcategory[];
+}
+
+// Categorie cote admin : avec compteurs de produits (categorie + sous-categories).
+export interface AdminSubcategory extends Subcategory {
+  productCount: number;
+}
+
+export interface AdminCategory {
+  id: string;
+  name: string;
+  slug: string;
+  productCount: number;
+  subcategories: AdminSubcategory[];
 }
 
 export interface ProductColor {
@@ -37,6 +59,7 @@ export interface ProductImage {
   id: string;
   url: string;
   position: number;
+  colorId: string | null;
 }
 
 export interface Product {
@@ -55,6 +78,8 @@ export interface Product {
   lowStockThreshold: number;
   categoryId: string;
   category: Category;
+  subcategoryId: string | null;
+  subcategory: Subcategory | null;
   images: ProductImage[];
   colors: ProductColor[];
   sizes: ProductSize[];
@@ -78,7 +103,7 @@ export interface Wilaya {
   bureaus: DeliveryBureau[];
 }
 
-export type OrderStatus = "NOUVELLE" | "CONFIRMEE" | "EXPEDIEE" | "ANNULEE";
+export type OrderStatus = "NOUVELLE" | "CONFIRMEE" | "EXPEDIEE" | "LIVREE" | "ANNULEE";
 export type ShippingMethod = "HOME" | "OFFICE";
 
 export interface OrderItem {

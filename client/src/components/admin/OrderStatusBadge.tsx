@@ -2,10 +2,11 @@ import type { OrderStatus } from "../../types";
 import { Badge } from "../ui/Badge";
 import { IconChevronDown } from "../ui/icons";
 
-const STATUS_TONES: Record<OrderStatus, "blue" | "amber" | "green" | "red"> = {
+const STATUS_TONES: Record<OrderStatus, "blue" | "amber" | "green" | "red" | "brand"> = {
   NOUVELLE: "blue",
   CONFIRMEE: "amber",
-  EXPEDIEE: "green",
+  EXPEDIEE: "brand",
+  LIVREE: "green",
   ANNULEE: "red",
 };
 
@@ -13,13 +14,15 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   NOUVELLE: "Nouvelle",
   CONFIRMEE: "Confirmee",
   EXPEDIEE: "Expediee",
+  LIVREE: "Livree",
   ANNULEE: "Annulee",
 };
 
 const STATUS_SELECT_CLASSES: Record<OrderStatus, string> = {
   NOUVELLE: "bg-blue-50 text-blue-700 ring-blue-600/20",
   CONFIRMEE: "bg-amber-50 text-amber-700 ring-amber-600/20",
-  EXPEDIEE: "bg-green-50 text-green-700 ring-green-600/20",
+  EXPEDIEE: "bg-brand-50 text-brand-700 ring-brand-600/20",
+  LIVREE: "bg-green-50 text-green-700 ring-green-600/20",
   ANNULEE: "bg-red-50 text-red-700 ring-red-600/20",
 };
 

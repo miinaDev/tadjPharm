@@ -1,6 +1,6 @@
 import { useRef, useState, type DragEvent } from "react";
 import type { Product } from "../../types";
-import { useDeleteImage, useUploadImages } from "../../hooks/useAdminProducts";
+import { useDeleteImage, useSetImageColor, useUploadImages } from "../../hooks/useAdminProducts";
 import { resolveMediaUrl } from "../../api/client";
 import { Card, CardBody, CardHeader } from "../ui/Card";
 import { IconTrash, IconUpload } from "../ui/icons";
@@ -12,7 +12,9 @@ export function ImageUploader({ product }: { product: Product }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadImages = useUploadImages(product.id);
   const deleteImage = useDeleteImage(product.id);
+  const setImageColor = useSetImageColor(product.id);
   const [isDragging, setIsDragging] = useState(false);
+  const hasColors = product.colors.length > 0;
 
   async function addFiles(list: FileList | null) {
     if (!list || list.length === 0) return;
@@ -28,28 +30,63 @@ export function ImageUploader({ product }: { product: Product }) {
 
   return (
     <Card>
-      <CardHeader title="Images" description="La premiere image est utilisee comme visuel principal" />
+      <CardHeader
+        title="Images"
+        description={
+          hasColors
+            ? "La premiere image est le visuel principal. Liez une image a une couleur pour l'afficher quand le client la selectionne."
+            : "La premiere image est utilisee comme visuel principal"
+        }
+      />
       <CardBody className="flex flex-col gap-4">
         {product.images.length > 0 && (
-          <div className="grid grid-cols-4 gap-3 sm:grid-cols-6">
-            {product.images.map((image, index) => (
-              <div key={image.id} className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200">
-                <img src={resolveMediaUrl(image.url)} alt="" className="h-full w-full object-cover" />
-                {index === 0 && (
-                  <span className="absolute left-1 top-1 rounded bg-slate-900/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                    Principale
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => deleteImage.mutate(image.id)}
-                  className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 transition group-hover:opacity-100"
-                  aria-label="Supprimer l'image"
-                >
-                  <IconTrash className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {product.images.map((image, index) => {
+              const linkedColor = product.colors.find((c) => c.id === image.colorId) ?? null;
+              return (
+                <div key={image.id} className="flex flex-col gap-1.5">
+                  <div className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200">
+                    <img src={resolveMediaUrl(image.url)} alt="" className="h-full w-full object-cover" />
+                    {index === 0 && (
+                      <span className="absolute left-1 top-1 rounded bg-slate-900/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                        Principale
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => deleteImage.mutate(image.id)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 transition group-hover:opacity-100"
+                      aria-label="Supprimer l'image"
+                    >
+                      <IconTrash className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {hasColors && (
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="h-3 w-3 shrink-0 rounded-full ring-1 ring-slate-200"
+                        style={{ backgroundColor: linkedColor?.hexCode ?? "transparent" }}
+                        title={linkedColor ? `Liee a ${linkedColor.label}` : "Aucune couleur liee"}
+                      />
+                      <select
+                        value={image.colorId ?? ""}
+                        onChange={(e) => setImageColor.mutate({ imageId: image.id, colorId: e.target.value || null })}
+                        disabled={setImageColor.isPending}
+                        aria-label="Lier cette image a une couleur"
+                        className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-1.5 py-1 text-xs text-slate-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/10 disabled:opacity-50"
+                      >
+                        <option value="">— Aucune couleur —</option>
+                        {product.colors.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 

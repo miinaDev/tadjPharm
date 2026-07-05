@@ -6,6 +6,7 @@ import * as authController from "../controllers/admin.auth.controller";
 import * as productsController from "../controllers/admin.products.controller";
 import * as ordersController from "../controllers/admin.orders.controller";
 import * as wilayasController from "../controllers/admin.wilayas.controller";
+import * as categoriesController from "../controllers/admin.categories.controller";
 import * as importController from "../controllers/admin.import.controller";
 import * as statsController from "../controllers/admin.stats.controller";
 
@@ -35,6 +36,7 @@ adminRouter.post("/products/:id/variants", asyncHandler(productsController.creat
 adminRouter.put("/variants/:variantId", asyncHandler(productsController.updateVariant));
 adminRouter.delete("/variants/:variantId", asyncHandler(productsController.deleteVariant));
 adminRouter.post("/products/:id/images", uploadProductImages.array("images", 6), asyncHandler(productsController.addImages));
+adminRouter.put("/products/:id/images/:imageId", asyncHandler(productsController.setImageColor));
 adminRouter.delete("/images/:imageId", asyncHandler(productsController.deleteImage));
 
 // Commandes
@@ -51,6 +53,15 @@ adminRouter.delete("/wilayas/:id", asyncHandler(wilayasController.deleteWilaya))
 adminRouter.post("/wilayas/:id/bureaus", asyncHandler(wilayasController.createBureau));
 adminRouter.put("/bureaus/:bureauId", asyncHandler(wilayasController.updateBureau));
 adminRouter.delete("/bureaus/:bureauId", asyncHandler(wilayasController.deleteBureau));
+
+// Categories & sous-categories
+adminRouter.get("/categories", asyncHandler(categoriesController.listCategories));
+adminRouter.post("/categories", asyncHandler(categoriesController.createCategory));
+adminRouter.put("/categories/:id", asyncHandler(categoriesController.updateCategory));
+adminRouter.delete("/categories/:id", asyncHandler(categoriesController.deleteCategory));
+adminRouter.post("/categories/:id/subcategories", asyncHandler(categoriesController.createSubcategory));
+adminRouter.put("/subcategories/:subId", asyncHandler(categoriesController.updateSubcategory));
+adminRouter.delete("/subcategories/:subId", asyncHandler(categoriesController.deleteSubcategory));
 
 // Import Excel
 adminRouter.post("/import/products", uploadExcelFile.single("file"), asyncHandler(importController.importProducts));

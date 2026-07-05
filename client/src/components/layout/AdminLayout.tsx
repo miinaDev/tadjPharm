@@ -1,12 +1,13 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../context/AdminAuthContext";
-import { IconGrid, IconLogout, IconMap, IconOrders, IconPackage, IconUpload } from "../ui/icons";
+import { IconGrid, IconLogout, IconMap, IconOrders, IconPackage, IconTags, IconUpload } from "../ui/icons";
 import type { ComponentType } from "react";
 
 const NAV_ITEMS: { to: string; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { to: "/admin", label: "Tableau de bord", icon: IconGrid },
   { to: "/admin/commandes", label: "Commandes", icon: IconOrders },
   { to: "/admin/produits", label: "Produits", icon: IconPackage },
+  { to: "/admin/categories", label: "Categories", icon: IconTags },
   { to: "/admin/produits/import", label: "Import Excel", icon: IconUpload },
   { to: "/admin/wilayas", label: "Wilayas", icon: IconMap },
 ];

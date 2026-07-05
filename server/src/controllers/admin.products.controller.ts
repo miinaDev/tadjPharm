@@ -4,6 +4,7 @@ import {
   addOptionSchema,
   createProductSchema,
   createVariantSchema,
+  setImageColorSchema,
   updateColorSchema,
   updateProductSchema,
   updateVariantSchema,
@@ -91,4 +92,10 @@ export async function addImages(req: Request, res: Response) {
 export async function deleteImage(req: Request, res: Response) {
   await productService.deleteImage(req.params.imageId);
   res.status(204).send();
+}
+
+export async function setImageColor(req: Request, res: Response) {
+  const input = setImageColorSchema.parse(req.body);
+  const product = await productService.setImageColor(req.params.id, req.params.imageId, input.colorId);
+  res.json(product);
 }

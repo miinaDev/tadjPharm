@@ -1,25 +1,20 @@
 import type { Request, Response } from "express";
-import { prisma } from "../prisma";
 import { createOrderSchema } from "../validators/order.validator";
 import * as productService from "../services/product.service";
 import * as orderService from "../services/order.service";
 import * as wilayaService from "../services/wilaya.service";
+import * as categoryService from "../services/category.service";
 
 export async function listCategories(_req: Request, res: Response) {
-  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
-  // "Autre" (categorie de repli) doit toujours apparaitre en dernier, meme si le tri est alphabetique.
-  categories.sort((a, b) => {
-    if (a.slug === "autre") return 1;
-    if (b.slug === "autre") return -1;
-    return a.name.localeCompare(b.name, "fr");
-  });
+  const categories = await categoryService.listPublicCategories();
   res.json(categories);
 }
 
 export async function listProducts(req: Request, res: Response) {
   const categorySlug = typeof req.query.categorySlug === "string" ? req.query.categorySlug : undefined;
+  const subcategorySlug = typeof req.query.subcategorySlug === "string" ? req.query.subcategorySlug : undefined;
   const search = typeof req.query.search === "string" ? req.query.search : undefined;
-  const products = await productService.listPublicProducts({ categorySlug, search });
+  const products = await productService.listPublicProducts({ categorySlug, subcategorySlug, search });
   res.json(products);
 }
 

@@ -13,6 +13,7 @@ import { ProductEditPage } from "./pages/admin/ProductEditPage";
 import { ExcelImportPage } from "./pages/admin/ExcelImportPage";
 import { OrdersPage } from "./pages/admin/OrdersPage";
 import { WilayasPage } from "./pages/admin/WilayasPage";
+import { CategoriesPage } from "./pages/admin/CategoriesPage";
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
         <Route path="produits/nouveau" element={<ProductCreatePage />} />
         <Route path="produits/import" element={<ExcelImportPage />} />
         <Route path="produits/:id" element={<ProductEditPage />} />
+        <Route path="categories" element={<CategoriesPage />} />
         <Route path="wilayas" element={<WilayasPage />} />
       </Route>
     </Routes>

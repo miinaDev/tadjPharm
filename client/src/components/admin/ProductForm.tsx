@@ -27,6 +27,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
   const [discountPercent, setDiscountPercent] = useState("0");
   const [ribbonLabel, setRibbonLabel] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [subcategoryId, setSubcategoryId] = useState("");
   const [hasColors, setHasColors] = useState(false);
   const [hasSizes, setHasSizes] = useState(false);
   const [hasVolumes, setHasVolumes] = useState(false);
@@ -35,10 +36,12 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
   const [volumes, setVolumes] = useState<string[]>([]);
   const [initialStock, setInitialStock] = useState("0");
   const [trackStock, setTrackStock] = useState(true);
-  const [lowStockThreshold, setLowStockThreshold] = useState("5");
+  const [lowStockThreshold, setLowStockThreshold] = useState("0");
   const [error, setError] = useState<string | null>(null);
 
   const hasAnyOption = hasColors || hasSizes || hasVolumes;
+  const selectedCategory = categories?.find((c) => c.id === categoryId);
+  const subcategories = selectedCategory?.subcategories ?? [];
 
   const priceNum = Number(basePrice);
   const discountNum = Number(discountPercent) || 0;
@@ -62,6 +65,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
       discountPercent: Number(discountPercent) || 0,
       ribbonLabel: ribbonLabel.trim() || null,
       categoryId,
+      subcategoryId: subcategoryId || null,
       hasColors,
       hasSizes,
       hasVolumes,
@@ -70,7 +74,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
       volumes: volumes.map((label) => ({ label })),
       initialStock: hasAnyOption ? 0 : Number(initialStock) || 0,
       trackStock,
-      lowStockThreshold: Number.isNaN(parsedThreshold) ? 5 : Math.max(0, parsedThreshold),
+      lowStockThreshold: Number.isNaN(parsedThreshold) ? 0 : Math.max(0, parsedThreshold),
     });
   }
 
@@ -114,7 +118,15 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Categorie" htmlFor="category" required>
-              <Select id="category" required value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+              <Select
+                id="category"
+                required
+                value={categoryId}
+                onChange={(e) => {
+                  setCategoryId(e.target.value);
+                  setSubcategoryId("");
+                }}
+              >
                 <option value="">Selectionner...</option>
                 {categories?.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -123,10 +135,28 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
                 ))}
               </Select>
             </Field>
+            {subcategories.length > 0 ? (
+              <Field label="Sous-categorie" htmlFor="subcategory" hint="Optionnel">
+                <Select id="subcategory" value={subcategoryId} onChange={(e) => setSubcategoryId(e.target.value)}>
+                  <option value="">— Aucune —</option>
+                  {subcategories.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            ) : (
+              <Field label="Ruban / etiquette" htmlFor="ribbon" hint="Laisser vide pour aucun ruban">
+                <Input id="ribbon" type="text" maxLength={30} value={ribbonLabel} onChange={(e) => setRibbonLabel(e.target.value)} placeholder="Ex: Promo, Nouveaute" />
+              </Field>
+            )}
+          </div>
+          {subcategories.length > 0 && (
             <Field label="Ruban / etiquette" htmlFor="ribbon" hint="Laisser vide pour aucun ruban">
               <Input id="ribbon" type="text" maxLength={30} value={ribbonLabel} onChange={(e) => setRibbonLabel(e.target.value)} placeholder="Ex: Promo, Nouveaute" />
             </Field>
-          </div>
+          )}
         </CardBody>
       </Card>
 
