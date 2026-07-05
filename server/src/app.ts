@@ -14,6 +14,10 @@ app.use(express.json());
 app.use(cookieParser());
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
+// Keep-alive : ping externe (UptimeRobot) pour empecher la mise en veille Render.
+// Volontairement sans acces DB pour ne pas garder Neon eveille en permanence.
+app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
 app.use("/api", publicRouter);
 app.use("/api/admin", adminRouter);
 
