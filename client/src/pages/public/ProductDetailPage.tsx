@@ -142,9 +142,6 @@ export function ProductDetailPage() {
             <p className="mb-3 text-sm font-semibold text-slate-800">Quantite</p>
             <div className="flex items-center gap-4">
               <QuantityStepper quantity={quantity} max={maxQuantity} onChange={setQuantity} />
-              {product.trackStock && selectedVariant && selectedVariant.stockQuantity > 0 && (
-                <span className="text-xs text-slate-400">{selectedVariant.stockQuantity} en stock</span>
-              )}
             </div>
           </div>
 
