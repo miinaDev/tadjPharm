@@ -1,0 +1,13 @@
+{
+  "name": "tadjpharm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deploiement tout-en-un (Hostinger) : build du frontend + du serveur, puis Express sert le site React ET l'API sur la meme origine.",
+  "scripts": {
+    "build": "npm --prefix client install && VITE_API_URL= npm --prefix client run build && npm --prefix server install && npm --prefix server run build",
+    "start": "npm --prefix server run start"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

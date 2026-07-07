@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import express from "express";
 import cors from "cors";
@@ -20,6 +21,23 @@ app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 app.use("/api", publicRouter);
 app.use("/api/admin", adminRouter);
+
+// Mode tout-en-un (Hostinger) : si le build du frontend est present a cote, l'API le
+// sert directement (meme origine -> pas de CORS ni de cookie cross-site a gerer).
+// Sur un deploiement API-seule (ex. Render), le dossier n'existe pas : on saute cette
+// partie et le notFoundHandler renvoie un 404 JSON comme avant.
+const clientDir = process.env.CLIENT_DIST_DIR
+  ? path.resolve(process.env.CLIENT_DIST_DIR)
+  : path.join(__dirname, "..", "..", "client", "dist");
+
+if (fs.existsSync(path.join(clientDir, "index.html"))) {
+  app.use(express.static(clientDir));
+  // Fallback SPA : toute route qui n'est ni /api, ni /uploads, ni /health, ni un fichier
+  // reel renvoie index.html pour que React Router prenne le relais (pas de 404 au refresh).
+  app.get(/^(?!\/(?:api|uploads|health)(?:\/|$)).*/, (_req, res) => {
+    res.sendFile(path.join(clientDir, "index.html"));
+  });
+}
 
 app.use(notFoundHandler);
 app.use(errorHandler);
