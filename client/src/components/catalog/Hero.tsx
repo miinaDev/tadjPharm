@@ -223,7 +223,7 @@ export function Hero() {
           </span>
 
           <h1 className="mt-4 font-extrabold uppercase leading-[0.95] tracking-tight">
-            <span className="block text-[2rem] text-brand-900 sm:text-5xl">Pharmacie</span>
+            <span className="block text-[2rem] text-brand-900 sm:text-5xl">Parapharmacie</span>
             <span className="block text-[2rem] text-brand-500 sm:text-5xl">Paramedicale</span>
           </h1>
 

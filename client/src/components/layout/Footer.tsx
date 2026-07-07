@@ -1,11 +1,13 @@
 import { IconFacebook, IconInstagram, IconTiktok } from "../ui/icons";
 
-// Coordonnees affichees dans le footer — a remplacer par les vraies valeurs.
-// phoneHref : format international sans espaces (pour le lien tel:).
+// Coordonnees affichees dans le footer.
+// href : numero sans espaces (pour le lien tel:) ; label : affichage local.
+const PHONES = [
+  { href: "0562863630", label: "05 62 86 36 30" },
+  { href: "0799878949", label: "07 99 87 89 49" },
+];
 const CONTACT = {
-  phoneHref: "+213562863630",
-  phoneLabel: "+213 562 863 630",
-  email: "contact@tadjpharm.dz",
+  email: "contact@tadjpharm.com",
 };
 
 const SOCIALS = [
@@ -45,13 +47,16 @@ export function Footer() {
 
         {/* Contact */}
         <div className="flex flex-col items-center gap-2.5 sm:flex-row sm:gap-5">
-          <a
-            href={`tel:${CONTACT.phoneHref}`}
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-brand-600"
-          >
-            <IconPhone className="h-4 w-4 text-brand-500" />
-            {CONTACT.phoneLabel}
-          </a>
+          {PHONES.map((phone) => (
+            <a
+              key={phone.href}
+              href={`tel:${phone.href}`}
+              className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-brand-600"
+            >
+              <IconPhone className="h-4 w-4 text-brand-500" />
+              {phone.label}
+            </a>
+          ))}
           <a
             href={`mailto:${CONTACT.email}`}
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-brand-600"

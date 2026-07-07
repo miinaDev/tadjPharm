@@ -17,6 +17,12 @@ function variantLabel(variant: ProductVariant) {
   return parts.length > 0 ? parts.join(" / ") : "Standard";
 }
 
+// "la couleur", "la taille et la contenance", etc.
+function joinFr(items: string[]) {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} et ${items[items.length - 1]}`;
+}
+
 function buildCartItem(product: Product, variant: ProductVariant, unitPrice: number) {
   return {
     variantId: variant.id,
@@ -78,6 +84,19 @@ export function ProductDetailPage() {
   const canBuy = Boolean(selectedVariant && (!product.trackStock || selectedVariant.stockQuantity > 0));
   const maxQuantity = product.trackStock ? Math.max(1, selectedVariant?.stockQuantity ?? 1) : 99;
   const hasOptions = product.hasColors || product.hasSizes || product.hasVolumes;
+
+  // Le produit a des options mais aucune variante n'est encore resolue : on invite a les choisir.
+  const missingOptions = [
+    product.hasColors && !selection.colorId && "la couleur",
+    product.hasSizes && !selection.sizeId && "la taille",
+    product.hasVolumes && !selection.volumeId && "la contenance",
+  ].filter((v): v is string => Boolean(v));
+  const needsSelection = hasOptions && !selectedVariant;
+  const selectionHint = !needsSelection
+    ? null
+    : missingOptions.length > 0
+      ? `Veuillez sélectionner ${joinFr(missingOptions)} pour commander.`
+      : "Cette combinaison n'est pas disponible.";
 
   const checkoutLine: CheckoutLine[] = selectedVariant
     ? [{ ...buildCartItem(product, selectedVariant, price), quantity }]
@@ -147,6 +166,15 @@ export function ProductDetailPage() {
 
           {product.trackStock && selectedVariant && selectedVariant.stockQuantity === 0 && (
             <p className="text-sm font-medium text-red-500">Rupture de stock pour cette combinaison</p>
+          )}
+
+          {selectionHint && (
+            <div className="flex items-center gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">
+              <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+              {selectionHint}
+            </div>
           )}
 
           <div className="mt-1 flex flex-col gap-3 sm:flex-row">
