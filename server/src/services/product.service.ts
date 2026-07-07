@@ -46,7 +46,13 @@ async function generateUniqueSlug(name: string) {
   }
 }
 
-export async function listPublicProducts(params: { categorySlug?: string; subcategorySlug?: string; search?: string }) {
+export async function listPublicProducts(params: {
+  categorySlug?: string;
+  subcategorySlug?: string;
+  search?: string;
+  page: number;
+  pageSize: number;
+}) {
   // La recherche porte sur le nom du produit, de la categorie ET de la sous-categorie (comme cote admin).
   const searchFilter: Prisma.ProductWhereInput = params.search
     ? {
@@ -57,19 +63,26 @@ export async function listPublicProducts(params: { categorySlug?: string; subcat
         ],
       }
     : {};
-  const products = await prisma.product.findMany({
-    where: {
-      AND: [
-        { isActive: true },
-        params.categorySlug ? { category: { slug: params.categorySlug } } : {},
-        params.subcategorySlug ? { subcategory: { slug: params.subcategorySlug } } : {},
-        searchFilter,
-      ],
-    },
-    include: PRODUCT_INCLUDE,
-    orderBy: { createdAt: "desc" },
-  });
-  return products.map(serializeProduct);
+  const where: Prisma.ProductWhereInput = {
+    AND: [
+      { isActive: true },
+      params.categorySlug ? { category: { slug: params.categorySlug } } : {},
+      params.subcategorySlug ? { subcategory: { slug: params.subcategorySlug } } : {},
+      searchFilter,
+    ],
+  };
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      include: PRODUCT_INCLUDE,
+      orderBy: { createdAt: "desc" },
+      skip: (params.page - 1) * params.pageSize,
+      take: params.pageSize,
+    }),
+    prisma.product.count({ where }),
+  ]);
+  return { products: products.map(serializeProduct), total };
 }
 
 export async function getPublicProductBySlug(slug: string) {
@@ -160,7 +173,27 @@ export async function createProduct(input: CreateProductInput) {
       ? await Promise.all(input.volumes.map((v) => tx.productVolume.create({ data: { productId: created.id, label: v.label } })))
       : [];
 
-    if (!input.hasColors && !input.hasSizes && !input.hasVolumes) {
+    const hasAnyOption = input.hasColors || input.hasSizes || input.hasVolumes;
+
+    if (hasAnyOption) {
+      // Les variantes referencent les couleurs/tailles/volumes qu'on vient de creer, par label.
+      const colorIdByLabel = new Map(colors.map((c) => [c.label, c.id]));
+      const sizeIdByLabel = new Map(sizes.map((s) => [s.label, s.id]));
+      const volumeIdByLabel = new Map(volumes.map((v) => [v.label, v.id]));
+
+      for (const variant of input.variants) {
+        await tx.productVariant.create({
+          data: {
+            productId: created.id,
+            colorId: variant.colorLabel ? colorIdByLabel.get(variant.colorLabel) ?? null : null,
+            sizeId: variant.sizeLabel ? sizeIdByLabel.get(variant.sizeLabel) ?? null : null,
+            volumeId: variant.volumeLabel ? volumeIdByLabel.get(variant.volumeLabel) ?? null : null,
+            stockQuantity: variant.stockQuantity,
+            priceOverride: variant.priceOverride ?? null,
+          },
+        });
+      }
+    } else {
       await tx.productVariant.create({
         data: { productId: created.id, stockQuantity: input.initialStock },
       });

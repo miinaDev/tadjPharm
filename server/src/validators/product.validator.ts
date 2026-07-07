@@ -14,6 +14,19 @@ export const createProductSchema = z.object({
   colors: z.array(z.object({ label: z.string().min(1), hexCode: z.string().optional() })).default([]),
   sizes: z.array(z.object({ label: z.string().min(1) })).default([]),
   volumes: z.array(z.object({ label: z.string().min(1) })).default([]),
+  // Combinaisons couleur/taille/volume avec leur stock et prix, saisies directement a la creation
+  // (les labels referencent les valeurs des tableaux colors/sizes/volumes ci-dessus).
+  variants: z
+    .array(
+      z.object({
+        colorLabel: z.string().min(1).optional(),
+        sizeLabel: z.string().min(1).optional(),
+        volumeLabel: z.string().min(1).optional(),
+        stockQuantity: z.number().int().min(0).default(0),
+        priceOverride: z.number().positive().nullable().optional(),
+      })
+    )
+    .default([]),
   initialStock: z.number().int().min(0).default(0),
   trackStock: z.boolean().default(true),
   lowStockThreshold: z.number().int().min(0).max(1000).default(0),

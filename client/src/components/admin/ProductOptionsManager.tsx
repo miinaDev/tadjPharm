@@ -37,7 +37,7 @@ function OptionGroup({ product, type }: { product: Product; type: OptionType }) 
 
   return (
     <div>
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{LABELS[type]}</p>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">{LABELS[type]}</p>
       <div className="flex flex-wrap items-center gap-1.5">
         {type === "color"
           ? product.colors.map((opt) => (

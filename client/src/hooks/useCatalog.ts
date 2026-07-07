@@ -5,10 +5,20 @@ export function useCategories() {
   return useQuery({ queryKey: ["categories"], queryFn: catalogApi.getCategories });
 }
 
-export function useProducts(params: { categorySlug?: string; subcategorySlug?: string; search?: string } = {}) {
+export function useProducts(
+  params: { categorySlug?: string; subcategorySlug?: string; search?: string; page?: number; pageSize?: number } = {}
+) {
   return useQuery({
-    queryKey: ["products", params.categorySlug ?? null, params.subcategorySlug ?? null, params.search ?? null],
+    queryKey: [
+      "products",
+      params.categorySlug ?? null,
+      params.subcategorySlug ?? null,
+      params.search ?? null,
+      params.page ?? 1,
+      params.pageSize ?? null,
+    ],
     queryFn: () => catalogApi.getProducts(params),
+    placeholderData: (prev) => prev,
   });
 }
 

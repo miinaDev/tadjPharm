@@ -1,14 +1,16 @@
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useCategories } from "../../hooks/useCatalog";
 import { TagListInput } from "./TagListInput";
 import { ColorListInput, type ColorValue } from "./ColorListInput";
 import { ImagePicker } from "./ImagePicker";
+import { VariantMatrixBuilder, type VariantRowValue } from "./VariantMatrixBuilder";
 import { Card, CardBody, CardHeader } from "../ui/Card";
 import { Field, Input, Select, Textarea } from "../ui/Field";
 import { Switch } from "../ui/Switch";
 import { Button } from "../ui/Button";
 import { discountedPrice } from "../../utils/pricing";
+import { buildVariantCombos, comboKey } from "../../utils/variants";
 import type { CreateProductPayload } from "../../api/admin";
 
 interface ProductFormProps {
@@ -34,6 +36,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
   const [colors, setColors] = useState<ColorValue[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [volumes, setVolumes] = useState<string[]>([]);
+  const [variantValues, setVariantValues] = useState<Record<string, VariantRowValue>>({});
   const [initialStock, setInitialStock] = useState("0");
   const [trackStock, setTrackStock] = useState(true);
   const [lowStockThreshold, setLowStockThreshold] = useState("0");
@@ -47,6 +50,23 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
   const discountNum = Number(discountPercent) || 0;
   const reducedPreview = priceNum > 0 && discountNum > 0 ? discountedPrice(priceNum, discountNum) : null;
 
+  const variantCombos = useMemo(
+    () =>
+      buildVariantCombos(
+        hasColors,
+        hasSizes,
+        hasVolumes,
+        colors.map((c) => c.label),
+        sizes,
+        volumes
+      ),
+    [hasColors, hasSizes, hasVolumes, colors, sizes, volumes]
+  );
+
+  function updateVariantValue(key: string, patch: Partial<VariantRowValue>) {
+    setVariantValues((prev) => ({ ...prev, [key]: { ...(prev[key] ?? { stockQuantity: "0", priceOverride: "" }), ...patch } }));
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -54,6 +74,11 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
     const price = Number(basePrice);
     if (!name || !categoryId || Number.isNaN(price) || price <= 0) {
       setError("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+
+    if (hasAnyOption && variantCombos.length === 0) {
+      setError("Ajoutez au moins une valeur pour chaque option activee (couleur, taille, volume) afin de definir le stock");
       return;
     }
 
@@ -72,6 +97,16 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
       colors: colors.map((c) => ({ label: c.label, hexCode: c.hexCode })),
       sizes: sizes.map((label) => ({ label })),
       volumes: volumes.map((label) => ({ label })),
+      variants: variantCombos.map((combo) => {
+        const value = variantValues[comboKey(combo)] ?? { stockQuantity: "0", priceOverride: "" };
+        return {
+          colorLabel: combo.colorLabel,
+          sizeLabel: combo.sizeLabel,
+          volumeLabel: combo.volumeLabel,
+          stockQuantity: Number(value.stockQuantity) || 0,
+          priceOverride: value.priceOverride ? Number(value.priceOverride) : null,
+        };
+      }),
       initialStock: hasAnyOption ? 0 : Number(initialStock) || 0,
       trackStock,
       lowStockThreshold: Number.isNaN(parsedThreshold) ? 0 : Math.max(0, parsedThreshold),
@@ -161,7 +196,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
       </Card>
 
       <Card>
-        <CardHeader title="Options du produit" description="Activez les options pertinentes puis ajoutez les valeurs disponibles" />
+        <CardHeader title="Options et variantes" description="Activez les options pertinentes, ajoutez les valeurs, puis definissez le stock (et le prix) de chaque combinaison" />
         <CardBody className="flex flex-col gap-4">
           <div>
             <Switch checked={hasColors} onChange={setHasColors} label="Couleurs" description="Le client choisit une couleur" />
@@ -198,9 +233,16 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
             </div>
           )}
 
-          {hasAnyOption && (
+          {hasAnyOption && variantCombos.length > 0 && (
+            <div className="border-t border-slate-100 pt-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-700">Stock par combinaison</p>
+              <VariantMatrixBuilder combos={variantCombos} values={variantValues} onChange={updateVariantValue} basePrice={priceNum || 0} />
+            </div>
+          )}
+
+          {hasAnyOption && variantCombos.length === 0 && (
             <p className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700">
-              Apres creation, ajoutez les combinaisons (ex: Rouge / M) et leur stock sur la page du produit.
+              Ajoutez au moins une valeur pour chaque option activee : le tableau de stock par combinaison apparaitra ici.
             </p>
           )}
         </CardBody>
@@ -250,7 +292,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
 
       <div className="flex items-center gap-3">
         <Button type="submit" variant="primary" disabled={submitting}>
-          {submitting ? "Enregistrement..." : "Creer le produit"}
+          {submitting ? "Creation en cours..." : "Creer le produit"}
         </Button>
         <Link to="/admin/produits">
           <Button type="button" variant="ghost">

@@ -6,10 +6,21 @@ interface CategoryFilterBarProps {
   activeSlug?: string;
 }
 
+// Meme cible que le bouton "Voir nos produits" du hero : on defile jusqu'au catalogue.
+function scrollToCatalogue() {
+  // Double rAF : on laisse la nouvelle route se rendre (le hero peut apparaitre/disparaitre) avant de defiler.
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() =>
+      document.getElementById("catalogue")?.scrollIntoView({ behavior: "auto", block: "start" })
+    )
+  );
+}
+
 function Tab({ to, label, active }: { to: string; label: string; active: boolean }) {
   return (
     <Link
       to={to}
+      onClick={scrollToCatalogue}
       className={`relative shrink-0 pb-1 text-[15px] font-medium transition ${
         active ? "text-brand-600" : "text-slate-400 hover:text-slate-600"
       }`}

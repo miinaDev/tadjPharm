@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAdminProduct, useUpdateProduct } from "../../hooks/useAdminProducts";
 import { useCategories } from "../../hooks/useCatalog";
@@ -20,11 +20,8 @@ export function ProductEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const navState = location.state as { imageError?: string; focusStock?: boolean } | null;
-  const imageError = navState?.imageError;
-  const focusStock = navState?.focusStock ?? false;
-  const stockSectionRef = useRef<HTMLDivElement>(null);
-  const scrolledToStock = useRef(false);
+  const navState = location.state as { justCreated?: boolean } | null;
+  const justCreated = navState?.justCreated ?? false;
   const { data: product, isLoading } = useAdminProduct(id);
   const { data: categories } = useCategories();
   const updateProduct = useUpdateProduct(id ?? "");
@@ -39,14 +36,6 @@ export function ProductEditPage() {
   const [isActive, setIsActive] = useState(true);
   const [trackStock, setTrackStock] = useState(true);
   const [lowStockThreshold, setLowStockThreshold] = useState("0");
-
-  // Apres une creation, on defile automatiquement jusqu'a la section stock/variantes.
-  useEffect(() => {
-    if (focusStock && product && !scrolledToStock.current && stockSectionRef.current) {
-      scrolledToStock.current = true;
-      stockSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [focusStock, product]);
 
   useEffect(() => {
     if (product) {
@@ -103,7 +92,11 @@ export function ProductEditPage() {
         action={<Badge tone={product.isActive ? "green" : "slate"}>{product.isActive ? "Actif" : "Inactif"}</Badge>}
       />
 
-      {imageError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{imageError}</p>}
+      {justCreated && (
+        <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+          Produit cree avec succes. Vous pouvez encore ajuster ses informations, ses variantes ou ses images ci-dessous.
+        </p>
+      )}
 
       <Card>
         <CardHeader title="Informations generales" />
@@ -207,7 +200,7 @@ export function ProductEditPage() {
         </CardBody>
       </Card>
 
-      <div ref={stockSectionRef} id="section-stock" className="flex scroll-mt-24 flex-col gap-5">
+      <div className="flex flex-col gap-5">
         <ProductOptionsManager product={product} />
         <VariantMatrixEditor product={product} />
       </div>

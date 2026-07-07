@@ -27,6 +27,7 @@ export interface CreateProductPayload {
   colors: { label: string; hexCode?: string }[];
   sizes: { label: string }[];
   volumes: { label: string }[];
+  variants: { colorLabel?: string; sizeLabel?: string; volumeLabel?: string; stockQuantity: number; priceOverride?: number | null }[];
   initialStock: number;
   trackStock: boolean;
   lowStockThreshold: number;

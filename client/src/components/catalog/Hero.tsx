@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 function scrollToCatalogue() {
-  document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("catalogue")?.scrollIntoView({ behavior: "auto", block: "start" });
 }
 
 /* ---------- Geometrie hexagonale (sommets en haut/bas, comme le logo) ---------- */

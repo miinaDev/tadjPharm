@@ -14,8 +14,10 @@ export async function listProducts(req: Request, res: Response) {
   const categorySlug = typeof req.query.categorySlug === "string" ? req.query.categorySlug : undefined;
   const subcategorySlug = typeof req.query.subcategorySlug === "string" ? req.query.subcategorySlug : undefined;
   const search = typeof req.query.search === "string" ? req.query.search : undefined;
-  const products = await productService.listPublicProducts({ categorySlug, subcategorySlug, search });
-  res.json(products);
+  const page = Math.max(1, Number(req.query.page ?? 1) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize ?? 50) || 50));
+  const result = await productService.listPublicProducts({ categorySlug, subcategorySlug, search, page, pageSize });
+  res.json(result);
 }
 
 export async function getProduct(req: Request, res: Response) {
