@@ -5,7 +5,7 @@
   "description": "Deploiement tout-en-un (Hostinger) : build du frontend + du serveur, puis Express sert le site React ET l'API sur la meme origine.",
   "scripts": {
     "build": "npm --prefix client install --include=dev && VITE_API_URL= npm --prefix client run build && npm --prefix server install --include=dev && npm --prefix server run build",
-    "start": "npm --prefix server run start"
+    "start": "node server/dist/server.js"
   },
   "engines": {
     "node": ">=20"
