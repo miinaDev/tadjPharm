@@ -205,7 +205,7 @@ function HexChip({ children, className = "h-11 w-11" }: { children: ReactNode; c
 
 const features = [
   { icon: <IconShield />, title: "Produits certifies", sub: "Qualite garantie" },
-  { icon: <IconTruck />, title: "Livraison 58 wilayas", sub: "Partout en Algerie" },
+  { icon: <IconTruck />, title: "Livraison 69 wilayas", sub: "Partout en Algerie" },
   { icon: <IconWallet />, title: "Paiement a la livraison", sub: "Sans avance" },
 ];
 
