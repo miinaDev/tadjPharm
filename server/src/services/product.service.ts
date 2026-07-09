@@ -157,6 +157,7 @@ export async function createProduct(input: CreateProductInput) {
         hasSizes: input.hasSizes,
         hasVolumes: input.hasVolumes,
         isAvailable: input.isAvailable,
+        isDeliverable: input.isDeliverable,
       },
     });
 

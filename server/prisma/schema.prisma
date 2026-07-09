@@ -44,6 +44,7 @@ model Product {
   ribbonLabel String?              // etiquette optionnelle affichee sur la carte (ex: "Promo")
   isActive    Boolean  @default(true)  // brouillon/publie : masque totalement le produit du catalogue quand false
   isAvailable Boolean  @default(true)  // disponible a la commande. false = visible mais non commandable (remplace la gestion de stock)
+  isDeliverable Boolean @default(true) // livrable normalement. false = livraison speciale : pas de bouton acheter, le client contacte la boutique pour un tarif
 
   hasColors  Boolean @default(false)
   hasSizes   Boolean @default(false)

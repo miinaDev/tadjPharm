@@ -29,6 +29,7 @@ export interface CreateProductPayload {
   volumes: { label: string }[];
   variants: { colorLabel?: string; sizeLabel?: string; volumeLabel?: string; priceOverride?: number | null; isActive: boolean }[];
   isAvailable: boolean;
+  isDeliverable: boolean;
 }
 
 export interface UpdateProductPayload {
@@ -41,6 +42,7 @@ export interface UpdateProductPayload {
   subcategoryId?: string | null;
   isActive?: boolean;
   isAvailable?: boolean;
+  isDeliverable?: boolean;
 }
 
 export interface ImportSummary {

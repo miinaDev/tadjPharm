@@ -98,6 +98,10 @@ export async function createOrder(input: CreateOrderInput) {
     if (!variant.product.isAvailable) {
       throw new HttpError(409, `Produit non disponible : ${variant.product.name}`);
     }
+    // Livraison speciale : ce produit ne passe pas par la commande en ligne (le client contacte la boutique).
+    if (!variant.product.isDeliverable) {
+      throw new HttpError(409, `Livraison speciale, contactez la boutique : ${variant.product.name}`);
+    }
     // La combinaison choisie (couleur/taille/volume) doit etre active.
     if (!variant.isActive) {
       throw new HttpError(409, `Cette variante n'est plus disponible : ${variant.product.name}`);

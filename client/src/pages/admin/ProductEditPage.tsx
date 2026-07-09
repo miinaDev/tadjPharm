@@ -35,6 +35,7 @@ export function ProductEditPage() {
   const [subcategoryId, setSubcategoryId] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isAvailable, setIsAvailable] = useState(true);
+  const [isDeliverable, setIsDeliverable] = useState(true);
 
   useEffect(() => {
     if (product) {
@@ -47,6 +48,7 @@ export function ProductEditPage() {
       setSubcategoryId(product.subcategoryId ?? "");
       setIsActive(product.isActive);
       setIsAvailable(product.isAvailable);
+      setIsDeliverable(product.isDeliverable);
     }
   }, [product]);
 
@@ -62,6 +64,7 @@ export function ProductEditPage() {
       subcategoryId: subcategoryId || null,
       isActive,
       isAvailable,
+      isDeliverable,
     });
     // Une fois enregistre, on revient a la liste de gestion des produits.
     navigate("/admin/produits");
@@ -174,6 +177,15 @@ export function ProductEditPage() {
                 onChange={setIsAvailable}
                 label="Disponible a la commande"
                 description="Desactivez pour empecher les clients de commander ce produit (il reste visible)"
+              />
+            </div>
+
+            <div className="border-t border-slate-100 pt-4">
+              <Switch
+                checked={isDeliverable}
+                onChange={setIsDeliverable}
+                label="Livrable normalement"
+                description="Desactivez pour une livraison speciale : le bouton acheter est remplace par une invitation a contacter la boutique pour un tarif"
               />
             </div>
           </form>

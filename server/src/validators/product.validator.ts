@@ -28,6 +28,7 @@ export const createProductSchema = z.object({
     )
     .default([]),
   isAvailable: z.boolean().default(true),
+  isDeliverable: z.boolean().default(true),
 });
 
 export const updateProductSchema = z.object({
@@ -40,6 +41,7 @@ export const updateProductSchema = z.object({
   subcategoryId: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
   isAvailable: z.boolean().optional(),
+  isDeliverable: z.boolean().optional(),
 });
 
 export const addOptionSchema = z.object({

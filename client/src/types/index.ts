@@ -72,6 +72,7 @@ export interface Product {
   ribbonLabel: string | null;
   isActive: boolean;
   isAvailable: boolean;
+  isDeliverable: boolean;
   hasColors: boolean;
   hasSizes: boolean;
   hasVolumes: boolean;

@@ -38,6 +38,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
   const [volumes, setVolumes] = useState<string[]>([]);
   const [variantValues, setVariantValues] = useState<Record<string, VariantRowValue>>({});
   const [isAvailable, setIsAvailable] = useState(true);
+  const [isDeliverable, setIsDeliverable] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const hasAnyOption = hasColors || hasSizes || hasVolumes;
@@ -105,6 +106,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
         };
       }),
       isAvailable,
+      isDeliverable,
     });
   }
 
@@ -236,14 +238,22 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
       </Card>
 
       <Card>
-        <CardHeader title="Disponibilite" description="Un produit non disponible reste visible mais ne peut pas etre commande" />
-        <CardBody>
+        <CardHeader title="Disponibilite et livraison" description="Un produit non disponible reste visible mais ne peut pas etre commande" />
+        <CardBody className="flex flex-col gap-4">
           <Switch
             checked={isAvailable}
             onChange={setIsAvailable}
             label="Disponible a la commande"
             description="Desactivez pour empecher les clients de commander ce produit (rupture, arret temporaire...)"
           />
+          <div className="border-t border-slate-100 pt-4">
+            <Switch
+              checked={isDeliverable}
+              onChange={setIsDeliverable}
+              label="Livrable normalement"
+              description="Desactivez pour une livraison speciale : le bouton acheter est remplace par une invitation a contacter la boutique pour un tarif"
+            />
+          </div>
         </CardBody>
       </Card>
 
