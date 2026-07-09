@@ -11,14 +11,8 @@ function variantLabel(variant: ProductVariant) {
   return parts.length > 0 ? parts.join(" / ") : "Standard";
 }
 
-function stockBadge(stock: number) {
-  if (stock === 0) return <Badge tone="red">Rupture</Badge>;
-  if (stock <= 5) return <Badge tone="amber">Stock bas</Badge>;
-  return <Badge tone="green">En stock</Badge>;
-}
-
 export function ProductDetailModal({ product, onClose }: { product: Product; onClose: () => void }) {
-  const totalStock = product.variants.reduce((sum, v) => sum + v.stockQuantity, 0);
+  const hasAnyOption = product.hasColors || product.hasSizes || product.hasVolumes;
   const image = product.images[0];
 
   return (
@@ -46,9 +40,10 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-slate-900">{product.name}</p>
             <p className="mt-0.5 text-sm text-slate-500">{product.category.name}</p>
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <PriceTag amount={product.basePrice} className="font-semibold text-slate-900" />
               <Badge tone={product.isActive ? "green" : "slate"}>{product.isActive ? "Actif" : "Inactif"}</Badge>
+              <Badge tone={product.isAvailable ? "green" : "red"}>{product.isAvailable ? "Disponible" : "Non disponible"}</Badge>
             </div>
           </div>
         </div>
@@ -57,33 +52,33 @@ export function ProductDetailModal({ product, onClose }: { product: Product; onC
           <p className="mt-4 whitespace-pre-line rounded-xl bg-slate-50 p-3 text-sm text-slate-600">{product.description}</p>
         )}
 
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Stock par option ({product.variants.length} variante{product.variants.length > 1 ? "s" : ""})
-          </p>
-          <Badge tone={totalStock === 0 ? "red" : totalStock <= 5 ? "amber" : "brand"}>{totalStock} unites au total</Badge>
-        </div>
-
-        <div className="mt-2 overflow-hidden rounded-xl border border-slate-200">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-3 py-2 font-medium">Combinaison</th>
-                <th className="px-3 py-2 font-medium">Statut</th>
-                <th className="px-3 py-2 text-right font-medium">Stock</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {product.variants.map((variant) => (
-                <tr key={variant.id}>
-                  <td className="px-3 py-2 font-medium text-slate-800">{variantLabel(variant)}</td>
-                  <td className="px-3 py-2">{stockBadge(variant.stockQuantity)}</td>
-                  <td className="px-3 py-2 text-right font-semibold text-slate-900">{variant.stockQuantity}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {hasAnyOption && (
+          <>
+            <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Variantes ({product.variants.length})
+            </p>
+            <div className="mt-2 overflow-hidden rounded-xl border border-slate-200">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Combinaison</th>
+                    <th className="px-3 py-2 text-right font-medium">Prix</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {product.variants.map((variant) => (
+                    <tr key={variant.id}>
+                      <td className="px-3 py-2 font-medium text-slate-800">{variantLabel(variant)}</td>
+                      <td className="px-3 py-2 text-right font-semibold text-slate-900">
+                        <PriceTag amount={variant.priceOverride ?? product.basePrice} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
 
         <div className="mt-5 flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>

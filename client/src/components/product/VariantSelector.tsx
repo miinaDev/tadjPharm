@@ -12,14 +12,15 @@ interface VariantSelectorProps {
   onChange: (patch: Partial<VariantSelection>) => void;
 }
 
-function isOptionInStock(product: Product, patch: Partial<VariantSelection>, selection: VariantSelection) {
+// Une option est proposable s'il existe une variante (combinaison) correspondante.
+// Plus de notion de stock : la disponibilite a la commande est geree au niveau du produit.
+function isOptionAvailable(product: Product, patch: Partial<VariantSelection>, selection: VariantSelection) {
   const candidate = { ...selection, ...patch };
   return product.variants.some(
     (v) =>
       (candidate.colorId === null || v.colorId === candidate.colorId) &&
       (candidate.sizeId === null || v.sizeId === candidate.sizeId) &&
-      (candidate.volumeId === null || v.volumeId === candidate.volumeId) &&
-      v.stockQuantity > 0
+      (candidate.volumeId === null || v.volumeId === candidate.volumeId)
   );
 }
 
@@ -36,7 +37,7 @@ export function VariantSelector({ product, selection, onChange }: VariantSelecto
           <div className="flex flex-wrap gap-5">
             {product.colors.map((color) => {
               const active = selection.colorId === color.id;
-              const available = isOptionInStock(product, { colorId: color.id }, selection);
+              const available = isOptionAvailable(product, { colorId: color.id }, selection);
               return (
                 <button
                   key={color.id}
@@ -68,7 +69,7 @@ export function VariantSelector({ product, selection, onChange }: VariantSelecto
           <div className="flex flex-wrap gap-3">
             {product.sizes.map((size) => {
               const active = selection.sizeId === size.id;
-              const available = isOptionInStock(product, { sizeId: size.id }, selection);
+              const available = isOptionAvailable(product, { sizeId: size.id }, selection);
               return (
                 <button
                   key={size.id}
@@ -95,7 +96,7 @@ export function VariantSelector({ product, selection, onChange }: VariantSelecto
           <div className="flex flex-wrap gap-3">
             {product.volumes.map((volume) => {
               const active = selection.volumeId === volume.id;
-              const available = isOptionInStock(product, { volumeId: volume.id }, selection);
+              const available = isOptionAvailable(product, { volumeId: volume.id }, selection);
               return (
                 <button
                   key={volume.id}

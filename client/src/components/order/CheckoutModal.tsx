@@ -15,7 +15,6 @@ export interface CheckoutLine {
   imageUrl: string | null;
   unitPrice: number;
   quantity: number;
-  maxStock: number;
 }
 
 interface CheckoutModalProps {
@@ -130,7 +129,7 @@ export function CheckoutModal({ lines, onQuantityChange, onRemove, onClose, onOr
                 <div className="mt-1.5 flex items-center gap-3">
                   <QuantityStepper
                     quantity={line.quantity}
-                    max={line.maxStock}
+                    max={99}
                     size="sm"
                     onChange={(q) => onQuantityChange(line.variantId, q)}
                   />

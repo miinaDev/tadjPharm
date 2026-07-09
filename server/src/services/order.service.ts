@@ -94,9 +94,9 @@ export async function createOrder(input: CreateOrderInput) {
     if (!variant || !variant.product.isActive) {
       throw new HttpError(404, "Un des produits de la commande est introuvable");
     }
-    // Produit sans suivi de stock : toujours disponible, on ne verifie pas la quantite.
-    if (variant.product.trackStock && variant.stockQuantity < item.quantity) {
-      throw new HttpError(409, `Stock insuffisant pour ${variant.product.name}`);
+    // Plus de gestion de stock : un produit est commandable uniquement s'il est disponible.
+    if (!variant.product.isAvailable) {
+      throw new HttpError(409, `Produit non disponible : ${variant.product.name}`);
     }
   }
 
@@ -114,45 +114,32 @@ export async function createOrder(input: CreateOrderInput) {
   });
   const totalNum = itemsWithPrice.reduce((sum, i) => sum + i.unitPriceNum * i.quantity, 0) + deliveryFeeNum;
 
-  const order = await prisma.$transaction(async (tx) => {
-    for (const item of items) {
-      // Produit sans suivi de stock : rien a decrementer (disponibilite illimitee).
-      if (!variantById.get(item.variantId)!.product.trackStock) continue;
-      const updated = await tx.productVariant.updateMany({
-        where: { id: item.variantId, stockQuantity: { gte: item.quantity } },
-        data: { stockQuantity: { decrement: item.quantity } },
-      });
-      if (updated.count === 0) {
-        throw new HttpError(409, "Stock insuffisant pour un des articles de la commande");
-      }
-    }
-
-    return tx.order.create({
-      data: {
-        firstName: input.firstName,
-        lastName: input.lastName,
-        email: input.email,
-        phone: input.phone,
-        wilayaId: input.wilayaId,
-        wilayaNameSnapshot: wilaya.name,
-        shippingMethod: input.shippingMethod,
-        address,
-        bureauId,
-        bureauNameSnapshot,
-        deliveryFeeSnapshot: deliveryFeeNum,
-        totalSnapshot: totalNum,
-        items: {
-          create: itemsWithPrice.map((item) => ({
-            variantId: item.variantId,
-            quantity: item.quantity,
-            unitPriceSnapshot: item.unitPriceNum,
-            productNameSnapshot: item.productNameSnapshot,
-            variantLabelSnapshot: item.variantLabelSnapshot,
-          })),
-        },
+  // Plus aucun stock a decrementer : on cree simplement la commande.
+  const order = await prisma.order.create({
+    data: {
+      firstName: input.firstName,
+      lastName: input.lastName,
+      email: input.email,
+      phone: input.phone,
+      wilayaId: input.wilayaId,
+      wilayaNameSnapshot: wilaya.name,
+      shippingMethod: input.shippingMethod,
+      address,
+      bureauId,
+      bureauNameSnapshot,
+      deliveryFeeSnapshot: deliveryFeeNum,
+      totalSnapshot: totalNum,
+      items: {
+        create: itemsWithPrice.map((item) => ({
+          variantId: item.variantId,
+          quantity: item.quantity,
+          unitPriceSnapshot: item.unitPriceNum,
+          productNameSnapshot: item.productNameSnapshot,
+          variantLabelSnapshot: item.variantLabelSnapshot,
+        })),
       },
-      include: ORDER_INCLUDE,
-    });
+    },
+    include: ORDER_INCLUDE,
   });
 
   return serializeOrder(order);
@@ -207,40 +194,11 @@ export async function listAdminOrders(params: {
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {
-  const order = await prisma.order.findUnique({
-    where: { id },
-    include: { items: { include: { variant: { include: { product: true } } } } },
-  });
+  const order = await prisma.order.findUnique({ where: { id } });
   if (!order) throw new HttpError(404, "Commande introuvable");
 
-  const isCancelling = status === "ANNULEE" && order.status !== "ANNULEE";
-  const isUncancelling = order.status === "ANNULEE" && status !== "ANNULEE";
-
-  // On ne touche au stock que pour les produits qui en assurent le suivi.
-  const affectsStock = (item: (typeof order.items)[number]) =>
-    Boolean(item.variantId && item.variant && item.variant.product.trackStock);
-
-  const updated = await prisma.$transaction(async (tx) => {
-    if (isCancelling) {
-      for (const item of order.items) {
-        // La variante a pu etre supprimee depuis (variantId null) : plus de stock a restaurer.
-        if (!affectsStock(item)) continue;
-        await tx.productVariant.update({
-          where: { id: item.variantId! },
-          data: { stockQuantity: { increment: item.quantity } },
-        });
-      }
-    } else if (isUncancelling) {
-      for (const item of order.items) {
-        if (!affectsStock(item)) continue;
-        await tx.productVariant.update({
-          where: { id: item.variantId! },
-          data: { stockQuantity: { decrement: item.quantity } },
-        });
-      }
-    }
-    return tx.order.update({ where: { id }, data: { status }, include: ORDER_INCLUDE });
-  });
-
+  // Plus de gestion de stock : changer le statut (y compris annuler/reactiver) n'a
+  // aucun effet sur un quelconque stock, on met juste a jour le statut.
+  const updated = await prisma.order.update({ where: { id }, data: { status }, include: ORDER_INCLUDE });
   return serializeOrder(updated);
 }

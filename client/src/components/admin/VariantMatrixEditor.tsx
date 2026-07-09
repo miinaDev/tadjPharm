@@ -4,19 +4,11 @@ import { useCreateVariant, useDeleteVariant, useUpdateVariant } from "../../hook
 import { Card, CardBody, CardHeader } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Select } from "../ui/Field";
-import { Badge } from "../ui/Badge";
 import { IconPlus, IconTrash } from "../ui/icons";
 
 function variantLabel(variant: Product["variants"][number]) {
   const parts = [variant.color?.label, variant.size?.label, variant.volume?.label].filter(Boolean);
   return parts.length > 0 ? parts.join(" / ") : "Standard";
-}
-
-function stockBadge(stock: number, product: Product) {
-  if (!product.trackStock) return <Badge tone="slate">Non suivi</Badge>;
-  if (stock === 0) return <Badge tone="red">Rupture</Badge>;
-  if (stock <= product.lowStockThreshold) return <Badge tone="amber">Stock bas</Badge>;
-  return <Badge tone="green">En stock</Badge>;
 }
 
 export function VariantMatrixEditor({ product }: { product: Product }) {
@@ -27,7 +19,6 @@ export function VariantMatrixEditor({ product }: { product: Product }) {
   const [colorId, setColorId] = useState("");
   const [sizeId, setSizeId] = useState("");
   const [volumeId, setVolumeId] = useState("");
-  const [stockQuantity, setStockQuantity] = useState("0");
   const [priceOverride, setPriceOverride] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -47,13 +38,11 @@ export function VariantMatrixEditor({ product }: { product: Product }) {
         colorId: product.hasColors ? colorId : null,
         sizeId: product.hasSizes ? sizeId : null,
         volumeId: product.hasVolumes ? volumeId : null,
-        stockQuantity: Number(stockQuantity) || 0,
         priceOverride: priceOverride ? Number(priceOverride) : null,
       });
       setColorId("");
       setSizeId("");
       setVolumeId("");
-      setStockQuantity("0");
       setPriceOverride("");
     } catch {
       setError("Cette combinaison existe peut-etre deja");
@@ -62,7 +51,7 @@ export function VariantMatrixEditor({ product }: { product: Product }) {
 
   return (
     <Card>
-      <CardHeader title="Variantes et stock" description="Une ligne de stock par combinaison couleur/taille/volume" />
+      <CardHeader title="Variantes" description="Les combinaisons couleur/taille/volume proposees, avec un prix optionnel par combinaison" />
       <CardBody className="flex flex-col gap-4">
         {product.variants.length > 0 && (
           <div className="overflow-hidden rounded-lg border border-slate-200">
@@ -70,9 +59,7 @@ export function VariantMatrixEditor({ product }: { product: Product }) {
               <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                 <tr>
                   <th className="px-3 py-2">Combinaison</th>
-                  <th className="px-3 py-2">Statut</th>
                   <th className="px-3 py-2">Prix</th>
-                  <th className="px-3 py-2">Stock</th>
                   <th className="px-3 py-2" />
                 </tr>
               </thead>
@@ -80,7 +67,6 @@ export function VariantMatrixEditor({ product }: { product: Product }) {
                 {product.variants.map((variant) => (
                   <tr key={variant.id}>
                     <td className="px-3 py-2 font-medium text-slate-800">{variantLabel(variant)}</td>
-                    <td className="px-3 py-2">{stockBadge(variant.stockQuantity, product)}</td>
                     <td className="px-3 py-2">
                       <input
                         type="number"
@@ -96,20 +82,6 @@ export function VariantMatrixEditor({ product }: { product: Product }) {
                           }
                         }}
                         className="w-28 rounded-md border border-slate-200 px-2 py-1 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/10"
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        min={0}
-                        defaultValue={variant.stockQuantity}
-                        onBlur={(e) => {
-                          const value = Number(e.target.value);
-                          if (!Number.isNaN(value) && value !== variant.stockQuantity) {
-                            updateVariant.mutate({ variantId: variant.id, stockQuantity: value });
-                          }
-                        }}
-                        className="w-20 rounded-md border border-slate-200 px-2 py-1 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/10"
                       />
                     </td>
                     <td className="px-3 py-2 text-right">
@@ -168,14 +140,6 @@ export function VariantMatrixEditor({ product }: { product: Product }) {
             onChange={(e) => setPriceOverride(e.target.value)}
             placeholder="Prix (optionnel)"
             className="w-32 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10"
-          />
-          <input
-            type="number"
-            min={0}
-            value={stockQuantity}
-            onChange={(e) => setStockQuantity(e.target.value)}
-            placeholder="Stock"
-            className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10"
           />
           <Button type="button" variant="primary" onClick={handleAdd} disabled={createVariant.isPending}>
             <IconPlus className="h-4 w-4" /> Ajouter

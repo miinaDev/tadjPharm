@@ -19,6 +19,7 @@
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
     "@prisma/adapter-neon": "^6.19.3",
+    "@prisma/adapter-pg": "^6.19.3",
     "@prisma/client": "^6.19.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.7",
@@ -36,12 +37,14 @@
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
+    "pg": "^8.22.0",
     "prisma": "^6.19.3",
     "typescript": "5.9.3",
     "ws": "^8.21.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/pg": "^8.20.0",
     "@types/ws": "^8.18.1",
     "tsx": "^4.19.1"
   },

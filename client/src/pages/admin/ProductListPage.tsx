@@ -165,14 +165,13 @@ export function ProductListPage() {
                     <th className="px-4 py-3 font-medium">Produit</th>
                     <th className="px-4 py-3 font-medium">Categorie</th>
                     <th className="px-4 py-3 font-medium">Prix</th>
-                    <th className="px-4 py-3 font-medium">Stock total</th>
+                    <th className="px-4 py-3 font-medium">Disponibilite</th>
                     <th className="px-4 py-3 font-medium">Statut</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {products.map((product) => {
-                    const totalStock = product.variants.reduce((sum, v) => sum + v.stockQuantity, 0);
                     const image = product.images[0];
                     const isSelected = selectedIds.has(product.id);
                     return (
@@ -190,7 +189,7 @@ export function ProductListPage() {
                             type="button"
                             onClick={() => setDetailProduct(product)}
                             className="flex items-center gap-3 text-left"
-                            title="Voir le detail et le stock par option"
+                            title="Voir le detail du produit"
                           >
                             <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
                               {image && <img src={resolveMediaUrl(image.url, 120)} alt="" className="h-full w-full object-cover" />}
@@ -203,13 +202,9 @@ export function ProductListPage() {
                           <PriceTag amount={product.basePrice} />
                         </td>
                         <td className="px-4 py-3">
-                          {product.trackStock ? (
-                            <Badge tone={totalStock === 0 ? "red" : totalStock <= product.lowStockThreshold ? "amber" : "slate"}>
-                              {totalStock} unites
-                            </Badge>
-                          ) : (
-                            <Badge tone="slate">Non suivi</Badge>
-                          )}
+                          <Badge tone={product.isAvailable ? "green" : "red"}>
+                            {product.isAvailable ? "Disponible" : "Non disponible"}
+                          </Badge>
                         </td>
                         <td className="px-4 py-3">
                           <Badge tone={product.isActive ? "green" : "slate"}>{product.isActive ? "Actif" : "Inactif"}</Badge>

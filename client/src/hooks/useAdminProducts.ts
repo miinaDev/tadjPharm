@@ -89,7 +89,7 @@ export function useUpdateColor(productId: string) {
 export function useCreateVariant(productId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { colorId?: string | null; sizeId?: string | null; volumeId?: string | null; stockQuantity: number; priceOverride?: number | null }) =>
+    mutationFn: (payload: { colorId?: string | null; sizeId?: string | null; volumeId?: string | null; priceOverride?: number | null }) =>
       adminProductsApi.createVariant(productId, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "product", productId] }),
   });
@@ -98,7 +98,7 @@ export function useCreateVariant(productId: string) {
 export function useUpdateVariant(productId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ variantId, ...payload }: { variantId: string; stockQuantity?: number; priceOverride?: number | null }) =>
+    mutationFn: ({ variantId, ...payload }: { variantId: string; priceOverride?: number | null }) =>
       adminProductsApi.updateVariant(variantId, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "product", productId] }),
   });

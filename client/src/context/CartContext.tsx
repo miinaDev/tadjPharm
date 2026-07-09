@@ -9,7 +9,6 @@ export interface CartItem {
   imageUrl: string | null;
   unitPrice: number;
   quantity: number;
-  maxStock: number;
 }
 
 interface CartContextValue {
@@ -26,6 +25,8 @@ interface CartContextValue {
 }
 
 const STORAGE_KEY = "tadjpharm_cart";
+// Plus de gestion de stock : on plafonne juste la quantite par article a une valeur raisonnable.
+const MAX_QUANTITY = 99;
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
@@ -50,10 +51,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((current) => {
       const existing = current.find((i) => i.variantId === item.variantId);
       if (existing) {
-        const newQuantity = Math.min(existing.quantity + quantity, existing.maxStock);
+        const newQuantity = Math.min(existing.quantity + quantity, MAX_QUANTITY);
         return current.map((i) => (i.variantId === item.variantId ? { ...i, quantity: newQuantity } : i));
       }
-      return [...current, { ...item, quantity: Math.min(quantity, item.maxStock) }];
+      return [...current, { ...item, quantity: Math.min(quantity, MAX_QUANTITY) }];
     });
     // On n'ouvre volontairement pas le tiroir a l'ajout : le retour visuel (flash « Ajoute ✓ »
     // sur la fiche produit + compteur du header) suffit et n'interrompt pas la navigation.
@@ -61,7 +62,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   function updateQuantity(variantId: string, quantity: number) {
     setItems((current) =>
-      current.map((i) => (i.variantId === variantId ? { ...i, quantity: Math.min(Math.max(quantity, 1), i.maxStock) } : i))
+      current.map((i) => (i.variantId === variantId ? { ...i, quantity: Math.min(Math.max(quantity, 1), MAX_QUANTITY) } : i))
     );
   }
 

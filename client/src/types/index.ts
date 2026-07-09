@@ -52,7 +52,6 @@ export interface ProductVariant {
   size: ProductSize | null;
   volume: ProductVolume | null;
   priceOverride: number | null;
-  stockQuantity: number;
 }
 
 export interface ProductImage {
@@ -71,11 +70,10 @@ export interface Product {
   discountPercent: number;
   ribbonLabel: string | null;
   isActive: boolean;
+  isAvailable: boolean;
   hasColors: boolean;
   hasSizes: boolean;
   hasVolumes: boolean;
-  trackStock: boolean;
-  lowStockThreshold: number;
   categoryId: string;
   category: Category;
   subcategoryId: string | null;
@@ -142,11 +140,9 @@ export interface AdminUser {
   email: string;
 }
 
-export interface LowStockItem {
+export interface UnavailableProduct {
   productId: string;
   productName: string;
-  variantLabel: string;
-  stock: number;
 }
 
 export interface DashboardStats {
@@ -155,8 +151,7 @@ export interface DashboardStats {
   prevMonthOrders: number;
   monthRevenue: number;
   monthAvgBasket: number;
-  outOfStockCount: number;
-  lowStockCount: number;
+  unavailableCount: number;
   recentOrders: Order[];
-  lowStock: LowStockItem[];
+  unavailable: UnavailableProduct[];
 }

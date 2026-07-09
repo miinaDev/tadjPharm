@@ -42,16 +42,12 @@ model Product {
   basePrice   Decimal  @db.Decimal(10, 2)
   discountPercent Int  @default(0) // 0 = pas de promo (remise en % sur le prix)
   ribbonLabel String?              // etiquette optionnelle affichee sur la carte (ex: "Promo")
-  isActive    Boolean  @default(true)
+  isActive    Boolean  @default(true)  // brouillon/publie : masque totalement le produit du catalogue quand false
+  isAvailable Boolean  @default(true)  // disponible a la commande. false = visible mais non commandable (remplace la gestion de stock)
 
   hasColors  Boolean @default(false)
   hasSizes   Boolean @default(false)
   hasVolumes Boolean @default(false)
-
-  // Suivi de stock : quand false, le produit est toujours disponible (stock ignore
-  // a l'achat, pas d'alerte de stock). lowStockThreshold = seuil "stock bas" par produit.
-  trackStock        Boolean @default(true)
-  lowStockThreshold Int     @default(5)
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
@@ -127,7 +123,7 @@ model ProductVolume {
   @@unique([productId, label])
 }
 
-// Unité de stock. Toujours au moins une par produit (variante "par défaut"
+// Combinaison d'options achetable. Toujours au moins une par produit (variante "par défaut"
 // avec colorId = sizeId = volumeId = null pour les produits sans options).
 model ProductVariant {
   id        String  @id @default(cuid())
@@ -142,7 +138,6 @@ model ProductVariant {
   volume   ProductVolume? @relation(fields: [volumeId], references: [id], onDelete: Cascade)
 
   priceOverride Decimal? @db.Decimal(10, 2)
-  stockQuantity Int      @default(0)
   sku           String?  @unique
 
   orderItems OrderItem[]

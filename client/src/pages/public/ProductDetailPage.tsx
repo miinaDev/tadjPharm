@@ -12,6 +12,9 @@ import { EmptyState } from "../../components/common/EmptyState";
 import { discountedPrice, hasPromo } from "../../utils/pricing";
 import type { Product, ProductVariant } from "../../types";
 
+// Plafond de quantite raisonnable (plus de gestion de stock : le client choisit librement).
+const MAX_QUANTITY = 99;
+
 function variantLabel(variant: ProductVariant) {
   const parts = [variant.color?.label, variant.size?.label, variant.volume?.label].filter(Boolean);
   return parts.length > 0 ? parts.join(" / ") : "Standard";
@@ -32,8 +35,6 @@ function buildCartItem(product: Product, variant: ProductVariant, unitPrice: num
     variantLabel: variantLabel(variant),
     imageUrl: product.images[0]?.url ?? null,
     unitPrice,
-    // Produit sans suivi de stock : disponibilite illimitee (plafond haut arbitraire).
-    maxStock: product.trackStock ? variant.stockQuantity : 999,
   };
 }
 
@@ -58,12 +59,11 @@ export function ProductDetailPage() {
 
   useEffect(() => {
     if (selectedVariant) {
-      const cap = product && !product.trackStock ? 99 : Math.max(selectedVariant.stockQuantity, 1);
-      setQuantity((q) => Math.min(Math.max(q, 1), cap));
+      setQuantity((q) => Math.min(Math.max(q, 1), MAX_QUANTITY));
     } else {
       setQuantity(1);
     }
-  }, [selectedVariant, product]);
+  }, [selectedVariant]);
 
   if (isLoading) {
     return (
@@ -80,9 +80,9 @@ export function ProductDetailPage() {
   const regular = selectedVariant?.priceOverride ?? product.basePrice;
   const promo = hasPromo(product);
   const price = discountedPrice(regular, product.discountPercent); // prix effectif (panier + checkout)
-  // Sans suivi de stock, le produit est toujours achetable (des qu'une variante est choisie).
-  const canBuy = Boolean(selectedVariant && (!product.trackStock || selectedVariant.stockQuantity > 0));
-  const maxQuantity = product.trackStock ? Math.max(1, selectedVariant?.stockQuantity ?? 1) : 99;
+  // Plus de stock : achetable si le produit est disponible et qu'une variante est resolue.
+  const canBuy = Boolean(product.isAvailable && selectedVariant);
+  const maxQuantity = MAX_QUANTITY;
   const hasOptions = product.hasColors || product.hasSizes || product.hasVolumes;
 
   // Le produit a des options mais aucune variante n'est encore resolue : on invite a les choisir.
@@ -164,8 +164,8 @@ export function ProductDetailPage() {
             </div>
           </div>
 
-          {product.trackStock && selectedVariant && selectedVariant.stockQuantity === 0 && (
-            <p className="text-sm font-medium text-red-500">Rupture de stock pour cette combinaison</p>
+          {!product.isAvailable && (
+            <p className="text-sm font-medium text-red-500">Ce produit n'est pas disponible a la commande pour le moment.</p>
           )}
 
           {selectionHint && (

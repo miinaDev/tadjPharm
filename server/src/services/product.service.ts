@@ -156,8 +156,7 @@ export async function createProduct(input: CreateProductInput) {
         hasColors: input.hasColors,
         hasSizes: input.hasSizes,
         hasVolumes: input.hasVolumes,
-        trackStock: input.trackStock,
-        lowStockThreshold: input.lowStockThreshold,
+        isAvailable: input.isAvailable,
       },
     });
 
@@ -188,14 +187,14 @@ export async function createProduct(input: CreateProductInput) {
             colorId: variant.colorLabel ? colorIdByLabel.get(variant.colorLabel) ?? null : null,
             sizeId: variant.sizeLabel ? sizeIdByLabel.get(variant.sizeLabel) ?? null : null,
             volumeId: variant.volumeLabel ? volumeIdByLabel.get(variant.volumeLabel) ?? null : null,
-            stockQuantity: variant.stockQuantity,
             priceOverride: variant.priceOverride ?? null,
           },
         });
       }
     } else {
+      // Produit sans options : une variante "par defaut" unique sert de cible aux commandes.
       await tx.productVariant.create({
-        data: { productId: created.id, stockQuantity: input.initialStock },
+        data: { productId: created.id },
       });
     }
 
@@ -289,7 +288,6 @@ export async function createVariant(productId: string, input: CreateVariantInput
       colorId: input.colorId ?? null,
       sizeId: input.sizeId ?? null,
       volumeId: input.volumeId ?? null,
-      stockQuantity: input.stockQuantity,
       priceOverride: input.priceOverride ?? null,
     },
   });

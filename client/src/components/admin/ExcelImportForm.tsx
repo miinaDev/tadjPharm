@@ -40,7 +40,7 @@ export function ExcelImportForm() {
       <Card>
         <CardHeader
           title="Modele de fichier"
-          description="Une ligne par combinaison. Colonnes : nom, categorie, description, prix, couleur, taille, volume, stock. Repetez le nom du produit sur chaque variante (une ligne par couleur/taille/volume avec son stock) ; laissez couleur/taille/volume vides pour un produit simple."
+          description="Une ligne par combinaison. Colonnes : nom, categorie, description, prix, couleur, taille, volume. Repetez le nom du produit sur chaque variante (une ligne par couleur/taille/volume) ; laissez couleur/taille/volume vides pour un produit simple."
           action={
             <a href={adminImportApi.templateUrl()}>
               <Button type="button" variant="secondary">

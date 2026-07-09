@@ -27,10 +27,8 @@ export interface CreateProductPayload {
   colors: { label: string; hexCode?: string }[];
   sizes: { label: string }[];
   volumes: { label: string }[];
-  variants: { colorLabel?: string; sizeLabel?: string; volumeLabel?: string; stockQuantity: number; priceOverride?: number | null }[];
-  initialStock: number;
-  trackStock: boolean;
-  lowStockThreshold: number;
+  variants: { colorLabel?: string; sizeLabel?: string; volumeLabel?: string; priceOverride?: number | null }[];
+  isAvailable: boolean;
 }
 
 export interface UpdateProductPayload {
@@ -42,8 +40,7 @@ export interface UpdateProductPayload {
   categoryId?: string;
   subcategoryId?: string | null;
   isActive?: boolean;
-  trackStock?: boolean;
-  lowStockThreshold?: number;
+  isAvailable?: boolean;
 }
 
 export interface ImportSummary {
@@ -83,9 +80,9 @@ export const adminProductsApi = {
     apiClient.put<Product>(`/api/admin/products/${productId}/colors/${colorId}`, payload),
   createVariant: (
     productId: string,
-    payload: { colorId?: string | null; sizeId?: string | null; volumeId?: string | null; stockQuantity: number; priceOverride?: number | null }
+    payload: { colorId?: string | null; sizeId?: string | null; volumeId?: string | null; priceOverride?: number | null }
   ) => apiClient.post<ProductVariant>(`/api/admin/products/${productId}/variants`, payload),
-  updateVariant: (variantId: string, payload: { stockQuantity?: number; priceOverride?: number | null }) =>
+  updateVariant: (variantId: string, payload: { priceOverride?: number | null }) =>
     apiClient.put<ProductVariant>(`/api/admin/variants/${variantId}`, payload),
   deleteVariant: (variantId: string) => apiClient.delete<void>(`/api/admin/variants/${variantId}`),
   uploadImages: (productId: string, files: File[]) => {

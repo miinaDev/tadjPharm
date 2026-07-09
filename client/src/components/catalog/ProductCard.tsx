@@ -5,7 +5,6 @@ import { discountedPrice, hasPromo } from "../../utils/pricing";
 
 export function ProductCard({ product }: { product: Product }) {
   const image = product.images[0];
-  const inStock = product.variants.some((v) => v.stockQuantity > 0);
   const promo = hasPromo(product);
   const reduced = discountedPrice(product.basePrice, product.discountPercent);
 
@@ -21,9 +20,9 @@ export function ProductCard({ product }: { product: Product }) {
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs text-slate-300">Pas d'image</div>
         )}
-        {!inStock && (
+        {!product.isAvailable && (
           <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-red-500 shadow-sm">
-            Rupture
+            Non disponible
           </span>
         )}
         {product.ribbonLabel && (

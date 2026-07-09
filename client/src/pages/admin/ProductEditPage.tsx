@@ -34,8 +34,7 @@ export function ProductEditPage() {
   const [categoryId, setCategoryId] = useState("");
   const [subcategoryId, setSubcategoryId] = useState("");
   const [isActive, setIsActive] = useState(true);
-  const [trackStock, setTrackStock] = useState(true);
-  const [lowStockThreshold, setLowStockThreshold] = useState("0");
+  const [isAvailable, setIsAvailable] = useState(true);
 
   useEffect(() => {
     if (product) {
@@ -47,14 +46,12 @@ export function ProductEditPage() {
       setCategoryId(product.categoryId);
       setSubcategoryId(product.subcategoryId ?? "");
       setIsActive(product.isActive);
-      setTrackStock(product.trackStock);
-      setLowStockThreshold(String(product.lowStockThreshold));
+      setIsAvailable(product.isAvailable);
     }
   }, [product]);
 
   async function handleSave(e: FormEvent) {
     e.preventDefault();
-    const parsedThreshold = parseInt(lowStockThreshold, 10);
     await updateProduct.mutateAsync({
       name,
       description,
@@ -64,8 +61,7 @@ export function ProductEditPage() {
       categoryId,
       subcategoryId: subcategoryId || null,
       isActive,
-      trackStock,
-      lowStockThreshold: Number.isNaN(parsedThreshold) ? 0 : Math.max(0, parsedThreshold),
+      isAvailable,
     });
     // Une fois enregistre, on revient a la liste de gestion des produits.
     navigate("/admin/produits");
@@ -172,29 +168,13 @@ export function ProductEditPage() {
               <Switch checked={isActive} onChange={setIsActive} label="Produit actif" description="Visible sur le site public" />
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-slate-100 pt-4">
+            <div className="border-t border-slate-100 pt-4">
               <Switch
-                checked={trackStock}
-                onChange={setTrackStock}
-                label="Suivi de stock"
-                description="Desactivez pour un produit toujours disponible (le stock n'est pas decompte a la commande)"
+                checked={isAvailable}
+                onChange={setIsAvailable}
+                label="Disponible a la commande"
+                description="Desactivez pour empecher les clients de commander ce produit (il reste visible)"
               />
-              {trackStock && (
-                <Field
-                  label="Seuil de stock bas"
-                  htmlFor="edit-low-stock"
-                  hint="Une alerte apparait sur le tableau de bord des qu'une variante atteint ce niveau ou moins"
-                >
-                  <Input
-                    id="edit-low-stock"
-                    type="number"
-                    min={0}
-                    value={lowStockThreshold}
-                    onChange={(e) => setLowStockThreshold(e.target.value)}
-                    className="max-w-[160px]"
-                  />
-                </Field>
-              )}
             </div>
           </form>
         </CardBody>

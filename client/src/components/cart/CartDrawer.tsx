@@ -62,7 +62,7 @@ export function CartDrawer() {
                     <div className="mt-auto flex items-center justify-between pt-2">
                       <QuantityStepper
                         quantity={item.quantity}
-                        max={item.maxStock}
+                        max={99}
                         size="sm"
                         onChange={(q) => cart.updateQuantity(item.variantId, q)}
                       />
@@ -121,7 +121,6 @@ export function CartDrawer() {
             imageUrl: item.imageUrl,
             unitPrice: item.unitPrice,
             quantity: item.quantity,
-            maxStock: item.maxStock,
           }))}
           onQuantityChange={cart.updateQuantity}
           onRemove={cart.removeItem}

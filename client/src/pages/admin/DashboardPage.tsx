@@ -69,10 +69,6 @@ function TrendBadge({ month, prev }: { month: number; prev: number }) {
   );
 }
 
-function stockTone(stock: number) {
-  return stock === 0 ? "red" : "amber";
-}
-
 export function DashboardPage() {
   const { data: stats, isLoading } = useAdminStats();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -175,35 +171,31 @@ export function DashboardPage() {
           )}
         </Card>
 
-        {/* Alertes stock */}
+        {/* Produits non disponibles */}
         <Card className="min-w-0">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div className="flex items-center gap-2">
               <IconAlert className="h-4 w-4 text-amber-500" />
-              <h2 className="text-sm font-semibold text-slate-900">Alertes stock</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Produits non disponibles</h2>
             </div>
-            <div className="flex items-center gap-1.5">
-              {stats.outOfStockCount > 0 && <Badge tone="red">{stats.outOfStockCount} rupture{stats.outOfStockCount > 1 ? "s" : ""}</Badge>}
-              {stats.lowStockCount > 0 && <Badge tone="amber">{stats.lowStockCount} bas</Badge>}
-            </div>
+            {stats.unavailableCount > 0 && (
+              <Badge tone="red">{stats.unavailableCount} produit{stats.unavailableCount > 1 ? "s" : ""}</Badge>
+            )}
           </div>
-          {stats.lowStock.length === 0 ? (
+          {stats.unavailable.length === 0 ? (
             <div className="p-6">
-              <EmptyState title="Tout est en stock" description="Aucun produit en rupture ou en stock bas." />
+              <EmptyState title="Tout est disponible" description="Aucun produit actif marque comme non disponible." />
             </div>
           ) : (
             <ul className="divide-y divide-slate-100">
-              {stats.lowStock.map((item, i) => (
-                <li key={`${item.productId}-${i}`}>
+              {stats.unavailable.map((item) => (
+                <li key={item.productId}>
                   <Link
                     to={`/admin/produits/${item.productId}`}
                     className="flex items-center justify-between gap-3 px-4 py-2.5 transition-colors hover:bg-slate-50"
                   >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-800">{item.productName}</p>
-                      <p className="truncate text-xs text-slate-400">{item.variantLabel}</p>
-                    </div>
-                    <Badge tone={stockTone(item.stock)}>{item.stock === 0 ? "Rupture" : `${item.stock} restant${item.stock > 1 ? "s" : ""}`}</Badge>
+                    <p className="truncate text-sm font-medium text-slate-800">{item.productName}</p>
+                    <Badge tone="red">Non disponible</Badge>
                   </Link>
                 </li>
               ))}

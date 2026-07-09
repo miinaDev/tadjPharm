@@ -14,7 +14,7 @@ export const createProductSchema = z.object({
   colors: z.array(z.object({ label: z.string().min(1), hexCode: z.string().optional() })).default([]),
   sizes: z.array(z.object({ label: z.string().min(1) })).default([]),
   volumes: z.array(z.object({ label: z.string().min(1) })).default([]),
-  // Combinaisons couleur/taille/volume avec leur stock et prix, saisies directement a la creation
+  // Combinaisons couleur/taille/volume avec leur prix optionnel, saisies directement a la creation
   // (les labels referencent les valeurs des tableaux colors/sizes/volumes ci-dessus).
   variants: z
     .array(
@@ -22,14 +22,11 @@ export const createProductSchema = z.object({
         colorLabel: z.string().min(1).optional(),
         sizeLabel: z.string().min(1).optional(),
         volumeLabel: z.string().min(1).optional(),
-        stockQuantity: z.number().int().min(0).default(0),
         priceOverride: z.number().positive().nullable().optional(),
       })
     )
     .default([]),
-  initialStock: z.number().int().min(0).default(0),
-  trackStock: z.boolean().default(true),
-  lowStockThreshold: z.number().int().min(0).max(1000).default(0),
+  isAvailable: z.boolean().default(true),
 });
 
 export const updateProductSchema = z.object({
@@ -41,8 +38,7 @@ export const updateProductSchema = z.object({
   categoryId: z.string().min(1).optional(),
   subcategoryId: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
-  trackStock: z.boolean().optional(),
-  lowStockThreshold: z.number().int().min(0).max(1000).optional(),
+  isAvailable: z.boolean().optional(),
 });
 
 export const addOptionSchema = z.object({
@@ -67,11 +63,9 @@ export const createVariantSchema = z.object({
   colorId: z.string().nullable().optional(),
   sizeId: z.string().nullable().optional(),
   volumeId: z.string().nullable().optional(),
-  stockQuantity: z.number().int().min(0).default(0),
   priceOverride: z.number().positive().nullable().optional(),
 });
 
 export const updateVariantSchema = z.object({
-  stockQuantity: z.number().int().min(0).optional(),
   priceOverride: z.number().positive().nullable().optional(),
 });

@@ -16,7 +16,7 @@ interface ImportSummary {
 }
 
 // Une ligne = une combinaison (variante). couleur/taille/volume au singulier.
-const EXPECTED_COLUMNS = ["nom", "categorie", "description", "prix", "couleur", "taille", "volume", "stock"] as const;
+const EXPECTED_COLUMNS = ["nom", "categorie", "description", "prix", "couleur", "taille", "volume"] as const;
 
 interface RawRow {
   rowNumber: number;
@@ -27,7 +27,6 @@ interface RawRow {
   couleur: string;
   taille: string;
   volume: string;
-  stock: string;
 }
 
 function cellToString(value: ExcelJS.CellValue): string {
@@ -90,7 +89,6 @@ export async function importProductsFromExcel(buffer: Buffer): Promise<ImportSum
       couleur: get("couleur"),
       taille: get("taille"),
       volume: get("volume"),
-      stock: get("stock"),
     });
   }
   summary.totalRows = rawRows.length;
@@ -150,16 +148,11 @@ export async function importProductsFromExcel(buffer: Buffer): Promise<ImportSum
         if (hasSizes && !taille) throw new Error(`Ligne ${r.rowNumber} : taille manquante`);
         if (hasVolumes && !volume) throw new Error(`Ligne ${r.rowNumber} : volume manquant`);
 
-        const stock = r.stock ? Number(r.stock) : 0;
-        if (Number.isNaN(stock) || stock < 0 || !Number.isInteger(stock)) {
-          throw new Error(`Ligne ${r.rowNumber} : stock invalide`);
-        }
-
         const comboKey = `${couleur.toLowerCase()}|${taille.toLowerCase()}|${volume.toLowerCase()}`;
         if (seenCombo.has(comboKey)) throw new Error(`Ligne ${r.rowNumber} : combinaison en double`);
         seenCombo.add(comboKey);
 
-        return { couleur, taille, volume, stock };
+        return { couleur, taille, volume };
       });
 
       const colorLabels = distinctLabels(variantSpecs.map((v) => v.couleur));
@@ -202,7 +195,6 @@ export async function importProductsFromExcel(buffer: Buffer): Promise<ImportSum
               colorId: spec.couleur ? colorMap.get(spec.couleur.toLowerCase()) ?? null : null,
               sizeId: spec.taille ? sizeMap.get(spec.taille.toLowerCase()) ?? null : null,
               volumeId: spec.volume ? volumeMap.get(spec.volume.toLowerCase()) ?? null : null,
-              stockQuantity: spec.stock,
             },
           });
         }
@@ -226,17 +218,17 @@ export async function buildImportTemplate(): Promise<ExcelJS.Buffer> {
   sheet.getRow(1).font = { bold: true };
 
   // Exemple 1 : produit a variantes (3 combinaisons, meme nom).
-  sheet.addRow({ nom: "Exemple - T-shirt", categorie: "Appareillage", description: "T-shirt medical", prix: 2500, couleur: "Rouge", taille: "M", volume: "", stock: 10 });
-  sheet.addRow({ nom: "Exemple - T-shirt", categorie: "Appareillage", description: "T-shirt medical", prix: 2500, couleur: "Rouge", taille: "L", volume: "", stock: 5 });
-  sheet.addRow({ nom: "Exemple - T-shirt", categorie: "Appareillage", description: "T-shirt medical", prix: 2500, couleur: "Bleu", taille: "M", volume: "", stock: 8 });
+  sheet.addRow({ nom: "Exemple - T-shirt", categorie: "Appareillage", description: "T-shirt medical", prix: 2500, couleur: "Rouge", taille: "M", volume: "" });
+  sheet.addRow({ nom: "Exemple - T-shirt", categorie: "Appareillage", description: "T-shirt medical", prix: 2500, couleur: "Rouge", taille: "L", volume: "" });
+  sheet.addRow({ nom: "Exemple - T-shirt", categorie: "Appareillage", description: "T-shirt medical", prix: 2500, couleur: "Bleu", taille: "M", volume: "" });
   // Exemple 2 : produit simple (une seule ligne, options vides).
-  sheet.addRow({ nom: "Exemple - Sirop", categorie: "Consommables", description: "Sirop 200ml", prix: 800, couleur: "", taille: "", volume: "", stock: 20 });
+  sheet.addRow({ nom: "Exemple - Sirop", categorie: "Consommables", description: "Sirop 200ml", prix: 800, couleur: "", taille: "", volume: "" });
 
   const info = workbook.addWorksheet("Instructions");
   info.columns = [{ header: "Comment remplir le fichier", key: "t", width: 95 }];
   info.getRow(1).font = { bold: true };
   const lines = [
-    "Une ligne = une combinaison (couleur / taille / volume) avec son propre stock.",
+    "Une ligne = une combinaison (couleur / taille / volume).",
     "Produit a plusieurs variantes : repetez le meme 'nom' sur chaque ligne, une ligne par combinaison.",
     "Les infos produit (categorie, description, prix) sont lues sur la 1ere ligne du produit.",
     "Produit SANS option : une seule ligne, laissez couleur/taille/volume vides.",

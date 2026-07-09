@@ -37,9 +37,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
   const [sizes, setSizes] = useState<string[]>([]);
   const [volumes, setVolumes] = useState<string[]>([]);
   const [variantValues, setVariantValues] = useState<Record<string, VariantRowValue>>({});
-  const [initialStock, setInitialStock] = useState("0");
-  const [trackStock, setTrackStock] = useState(true);
-  const [lowStockThreshold, setLowStockThreshold] = useState("0");
+  const [isAvailable, setIsAvailable] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const hasAnyOption = hasColors || hasSizes || hasVolumes;
@@ -64,7 +62,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
   );
 
   function updateVariantValue(key: string, patch: Partial<VariantRowValue>) {
-    setVariantValues((prev) => ({ ...prev, [key]: { ...(prev[key] ?? { stockQuantity: "0", priceOverride: "" }), ...patch } }));
+    setVariantValues((prev) => ({ ...prev, [key]: { ...(prev[key] ?? { priceOverride: "" }), ...patch } }));
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -78,11 +76,10 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
     }
 
     if (hasAnyOption && variantCombos.length === 0) {
-      setError("Ajoutez au moins une valeur pour chaque option activee (couleur, taille, volume) afin de definir le stock");
+      setError("Ajoutez au moins une valeur pour chaque option activee (couleur, taille, volume)");
       return;
     }
 
-    const parsedThreshold = parseInt(lowStockThreshold, 10);
     await onSubmit({
       name,
       description,
@@ -98,18 +95,15 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
       sizes: sizes.map((label) => ({ label })),
       volumes: volumes.map((label) => ({ label })),
       variants: variantCombos.map((combo) => {
-        const value = variantValues[comboKey(combo)] ?? { stockQuantity: "0", priceOverride: "" };
+        const value = variantValues[comboKey(combo)] ?? { priceOverride: "" };
         return {
           colorLabel: combo.colorLabel,
           sizeLabel: combo.sizeLabel,
           volumeLabel: combo.volumeLabel,
-          stockQuantity: Number(value.stockQuantity) || 0,
           priceOverride: value.priceOverride ? Number(value.priceOverride) : null,
         };
       }),
-      initialStock: hasAnyOption ? 0 : Number(initialStock) || 0,
-      trackStock,
-      lowStockThreshold: Number.isNaN(parsedThreshold) ? 0 : Math.max(0, parsedThreshold),
+      isAvailable,
     });
   }
 
@@ -196,7 +190,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
       </Card>
 
       <Card>
-        <CardHeader title="Options et variantes" description="Activez les options pertinentes, ajoutez les valeurs, puis definissez le stock (et le prix) de chaque combinaison" />
+        <CardHeader title="Options et variantes" description="Activez les options pertinentes, ajoutez les valeurs, puis definissez (optionnellement) un prix par combinaison" />
         <CardBody className="flex flex-col gap-4">
           <div>
             <Switch checked={hasColors} onChange={setHasColors} label="Couleurs" description="Le client choisit une couleur" />
@@ -225,59 +219,30 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
             )}
           </div>
 
-          {!hasAnyOption && (
-            <div className="border-t border-slate-100 pt-4">
-              <Field label="Stock initial" htmlFor="stock" hint="Aucune option activee : un seul stock est suivi pour ce produit.">
-                <Input id="stock" type="number" min={0} value={initialStock} onChange={(e) => setInitialStock(e.target.value)} className="max-w-[160px]" />
-              </Field>
-            </div>
-          )}
-
           {hasAnyOption && variantCombos.length > 0 && (
             <div className="border-t border-slate-100 pt-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-700">Stock par combinaison</p>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-700">Prix par combinaison (optionnel)</p>
               <VariantMatrixBuilder combos={variantCombos} values={variantValues} onChange={updateVariantValue} basePrice={priceNum || 0} />
             </div>
           )}
 
           {hasAnyOption && variantCombos.length === 0 && (
             <p className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700">
-              Ajoutez au moins une valeur pour chaque option activee : le tableau de stock par combinaison apparaitra ici.
+              Ajoutez au moins une valeur pour chaque option activee : le tableau des combinaisons apparaitra ici.
             </p>
           )}
         </CardBody>
       </Card>
 
       <Card>
-        <CardHeader title="Suivi de stock" description="Gerez la disponibilite et les alertes de stock de ce produit" />
-        <CardBody className="flex flex-col gap-4">
+        <CardHeader title="Disponibilite" description="Un produit non disponible reste visible mais ne peut pas etre commande" />
+        <CardBody>
           <Switch
-            checked={trackStock}
-            onChange={setTrackStock}
-            label="Suivi de stock"
-            description="Desactivez pour un produit toujours disponible (le stock n'est pas decompte a la commande)"
+            checked={isAvailable}
+            onChange={setIsAvailable}
+            label="Disponible a la commande"
+            description="Desactivez pour empecher les clients de commander ce produit (rupture, arret temporaire...)"
           />
-          {trackStock ? (
-            <Field
-              label="Seuil de stock bas"
-              htmlFor="low-stock"
-              hint="Une alerte apparait sur le tableau de bord des qu'une variante atteint ce niveau ou moins"
-            >
-              <Input
-                id="low-stock"
-                type="number"
-                min={0}
-                value={lowStockThreshold}
-                onChange={(e) => setLowStockThreshold(e.target.value)}
-                className="max-w-[160px]"
-              />
-            </Field>
-          ) : (
-            <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
-              Le suivi de stock est desactive : ce produit sera toujours affiche comme disponible et les commandes ne
-              decompteront pas le stock.
-            </p>
-          )}
         </CardBody>
       </Card>
 
