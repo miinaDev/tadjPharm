@@ -62,7 +62,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
   );
 
   function updateVariantValue(key: string, patch: Partial<VariantRowValue>) {
-    setVariantValues((prev) => ({ ...prev, [key]: { ...(prev[key] ?? { priceOverride: "" }), ...patch } }));
+    setVariantValues((prev) => ({ ...prev, [key]: { ...(prev[key] ?? { priceOverride: "", isActive: true }), ...patch } }));
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -95,12 +95,13 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
       sizes: sizes.map((label) => ({ label })),
       volumes: volumes.map((label) => ({ label })),
       variants: variantCombos.map((combo) => {
-        const value = variantValues[comboKey(combo)] ?? { priceOverride: "" };
+        const value = variantValues[comboKey(combo)] ?? { priceOverride: "", isActive: true };
         return {
           colorLabel: combo.colorLabel,
           sizeLabel: combo.sizeLabel,
           volumeLabel: combo.volumeLabel,
           priceOverride: value.priceOverride ? Number(value.priceOverride) : null,
+          isActive: value.isActive,
         };
       }),
       isAvailable,
@@ -221,7 +222,7 @@ export function ProductForm({ onSubmit, submitting, images, onImagesChange }: Pr
 
           {hasAnyOption && variantCombos.length > 0 && (
             <div className="border-t border-slate-100 pt-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-700">Prix par combinaison (optionnel)</p>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-700">Variantes : prix optionnel et activation par combinaison</p>
               <VariantMatrixBuilder combos={variantCombos} values={variantValues} onChange={updateVariantValue} basePrice={priceNum || 0} />
             </div>
           )}

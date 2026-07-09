@@ -98,6 +98,10 @@ export async function createOrder(input: CreateOrderInput) {
     if (!variant.product.isAvailable) {
       throw new HttpError(409, `Produit non disponible : ${variant.product.name}`);
     }
+    // La combinaison choisie (couleur/taille/volume) doit etre active.
+    if (!variant.isActive) {
+      throw new HttpError(409, `Cette variante n'est plus disponible : ${variant.product.name}`);
+    }
   }
 
   const itemsWithPrice = items.map((item) => {

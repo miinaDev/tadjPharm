@@ -23,6 +23,7 @@ export const createProductSchema = z.object({
         sizeLabel: z.string().min(1).optional(),
         volumeLabel: z.string().min(1).optional(),
         priceOverride: z.number().positive().nullable().optional(),
+        isActive: z.boolean().default(true),
       })
     )
     .default([]),
@@ -68,4 +69,5 @@ export const createVariantSchema = z.object({
 
 export const updateVariantSchema = z.object({
   priceOverride: z.number().positive().nullable().optional(),
+  isActive: z.boolean().optional(),
 });

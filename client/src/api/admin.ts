@@ -27,7 +27,7 @@ export interface CreateProductPayload {
   colors: { label: string; hexCode?: string }[];
   sizes: { label: string }[];
   volumes: { label: string }[];
-  variants: { colorLabel?: string; sizeLabel?: string; volumeLabel?: string; priceOverride?: number | null }[];
+  variants: { colorLabel?: string; sizeLabel?: string; volumeLabel?: string; priceOverride?: number | null; isActive: boolean }[];
   isAvailable: boolean;
 }
 
@@ -82,7 +82,7 @@ export const adminProductsApi = {
     productId: string,
     payload: { colorId?: string | null; sizeId?: string | null; volumeId?: string | null; priceOverride?: number | null }
   ) => apiClient.post<ProductVariant>(`/api/admin/products/${productId}/variants`, payload),
-  updateVariant: (variantId: string, payload: { priceOverride?: number | null }) =>
+  updateVariant: (variantId: string, payload: { priceOverride?: number | null; isActive?: boolean }) =>
     apiClient.put<ProductVariant>(`/api/admin/variants/${variantId}`, payload),
   deleteVariant: (variantId: string) => apiClient.delete<void>(`/api/admin/variants/${variantId}`),
   uploadImages: (productId: string, files: File[]) => {

@@ -80,8 +80,8 @@ export function ProductDetailPage() {
   const regular = selectedVariant?.priceOverride ?? product.basePrice;
   const promo = hasPromo(product);
   const price = discountedPrice(regular, product.discountPercent); // prix effectif (panier + checkout)
-  // Plus de stock : achetable si le produit est disponible et qu'une variante est resolue.
-  const canBuy = Boolean(product.isAvailable && selectedVariant);
+  // Achetable si le produit est disponible et que la combinaison choisie est resolue ET active.
+  const canBuy = Boolean(product.isAvailable && selectedVariant && selectedVariant.isActive);
   const maxQuantity = MAX_QUANTITY;
   const hasOptions = product.hasColors || product.hasSizes || product.hasVolumes;
 
@@ -166,6 +166,10 @@ export function ProductDetailPage() {
 
           {!product.isAvailable && (
             <p className="text-sm font-medium text-red-500">Ce produit n'est pas disponible a la commande pour le moment.</p>
+          )}
+
+          {product.isAvailable && selectedVariant && !selectedVariant.isActive && (
+            <p className="text-sm font-medium text-red-500">Cette combinaison n'est pas disponible.</p>
           )}
 
           {selectionHint && (

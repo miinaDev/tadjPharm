@@ -98,7 +98,7 @@ export function useCreateVariant(productId: string) {
 export function useUpdateVariant(productId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ variantId, ...payload }: { variantId: string; priceOverride?: number | null }) =>
+    mutationFn: ({ variantId, ...payload }: { variantId: string; priceOverride?: number | null; isActive?: boolean }) =>
       adminProductsApi.updateVariant(variantId, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "product", productId] }),
   });

@@ -12,12 +12,13 @@ interface VariantSelectorProps {
   onChange: (patch: Partial<VariantSelection>) => void;
 }
 
-// Une option est proposable s'il existe une variante (combinaison) correspondante.
-// Plus de notion de stock : la disponibilite a la commande est geree au niveau du produit.
+// Une option est proposable s'il existe une variante (combinaison) ACTIVE correspondante.
+// Les combinaisons desactivees par l'admin ne sont pas proposees au client.
 function isOptionAvailable(product: Product, patch: Partial<VariantSelection>, selection: VariantSelection) {
   const candidate = { ...selection, ...patch };
   return product.variants.some(
     (v) =>
+      v.isActive &&
       (candidate.colorId === null || v.colorId === candidate.colorId) &&
       (candidate.sizeId === null || v.sizeId === candidate.sizeId) &&
       (candidate.volumeId === null || v.volumeId === candidate.volumeId)

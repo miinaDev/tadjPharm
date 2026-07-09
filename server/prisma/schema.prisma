@@ -138,6 +138,7 @@ model ProductVariant {
   volume   ProductVolume? @relation(fields: [volumeId], references: [id], onDelete: Cascade)
 
   priceOverride Decimal? @db.Decimal(10, 2)
+  isActive      Boolean  @default(true) // combinaison proposee au client. false = combinaison desactivee (non commandable)
   sku           String?  @unique
 
   orderItems OrderItem[]

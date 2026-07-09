@@ -52,6 +52,7 @@ export interface ProductVariant {
   size: ProductSize | null;
   volume: ProductVolume | null;
   priceOverride: number | null;
+  isActive: boolean;
 }
 
 export interface ProductImage {

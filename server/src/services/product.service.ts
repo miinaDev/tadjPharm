@@ -188,6 +188,7 @@ export async function createProduct(input: CreateProductInput) {
             sizeId: variant.sizeLabel ? sizeIdByLabel.get(variant.sizeLabel) ?? null : null,
             volumeId: variant.volumeLabel ? volumeIdByLabel.get(variant.volumeLabel) ?? null : null,
             priceOverride: variant.priceOverride ?? null,
+            isActive: variant.isActive,
           },
         });
       }
@@ -234,6 +235,46 @@ export async function deleteProduct(id: string) {
   return { softDeleted: false };
 }
 
+// Regenere l'ensemble des variantes = produit cartesien des options reelles (couleurs x tailles x
+// volumes ; une dimension sans valeur = [null]). Cree les combinaisons manquantes (isActive true,
+// prix null) et supprime celles qui ne correspondent plus a aucune combinaison (ex. la variante
+// "Standard" tout-null des qu'on ajoute une 1ere option). OrderItem.variantId -> SetNull garde les
+// snapshots des commandes. Les variantes existantes conservent leur prix et leur etat actif/inactif.
+async function syncProductVariants(productId: string) {
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: { colors: true, sizes: true, volumes: true, variants: true },
+  });
+  if (!product) return;
+
+  const colorIds: (string | null)[] = product.colors.length ? product.colors.map((c) => c.id) : [null];
+  const sizeIds: (string | null)[] = product.sizes.length ? product.sizes.map((s) => s.id) : [null];
+  const volumeIds: (string | null)[] = product.volumes.length ? product.volumes.map((v) => v.id) : [null];
+
+  const key = (c: string | null, s: string | null, v: string | null) => `${c ?? ""}|${s ?? ""}|${v ?? ""}`;
+  const existing = new Set(product.variants.map((vr) => key(vr.colorId, vr.sizeId, vr.volumeId)));
+
+  const expected = new Set<string>();
+  const toCreate: { productId: string; colorId: string | null; sizeId: string | null; volumeId: string | null }[] = [];
+  for (const colorId of colorIds) {
+    for (const sizeId of sizeIds) {
+      for (const volumeId of volumeIds) {
+        const k = key(colorId, sizeId, volumeId);
+        expected.add(k);
+        if (!existing.has(k)) toCreate.push({ productId, colorId, sizeId, volumeId });
+      }
+    }
+  }
+  const toDelete = product.variants
+    .filter((vr) => !expected.has(key(vr.colorId, vr.sizeId, vr.volumeId)))
+    .map((vr) => vr.id);
+
+  await prisma.$transaction([
+    ...(toCreate.length ? [prisma.productVariant.createMany({ data: toCreate })] : []),
+    ...(toDelete.length ? [prisma.productVariant.deleteMany({ where: { id: { in: toDelete } } })] : []),
+  ]);
+}
+
 export async function addOption(productId: string, type: "color" | "size" | "volume", label: string, hexCode?: string) {
   const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) throw new HttpError(404, "Produit introuvable");
@@ -255,6 +296,8 @@ export async function addOption(productId: string, type: "color" | "size" | "vol
     ]);
   }
 
+  // Les nouvelles combinaisons (nouvelle valeur x options existantes) sont creees automatiquement.
+  await syncProductVariants(productId);
   return getAdminProductById(productId);
 }
 
@@ -263,11 +306,24 @@ export async function removeOption(productId: string, type: "color" | "size" | "
   // commandes conservent leur snapshot, donc la suppression est toujours possible.
   if (type === "color") {
     await prisma.productColor.delete({ where: { id: optionId } });
+    // Plus aucune couleur : on desactive l'option pour rester coherent avec l'affichage.
+    if ((await prisma.productColor.count({ where: { productId } })) === 0) {
+      await prisma.product.update({ where: { id: productId }, data: { hasColors: false } });
+    }
   } else if (type === "size") {
     await prisma.productSize.delete({ where: { id: optionId } });
+    if ((await prisma.productSize.count({ where: { productId } })) === 0) {
+      await prisma.product.update({ where: { id: productId }, data: { hasSizes: false } });
+    }
   } else {
     await prisma.productVolume.delete({ where: { id: optionId } });
+    if ((await prisma.productVolume.count({ where: { productId } })) === 0) {
+      await prisma.product.update({ where: { id: productId }, data: { hasVolumes: false } });
+    }
   }
+
+  // Recalcule les combinaisons (gere le cas "derniere valeur retiree" -> dimension repassee en null).
+  await syncProductVariants(productId);
   return getAdminProductById(productId);
 }
 
