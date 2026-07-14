@@ -218,6 +218,8 @@ model Order {
   deliveryFeeSnapshot Decimal @db.Decimal(10, 2)
   totalSnapshot       Decimal @db.Decimal(10, 2)
 
+  adminNote String @default("") @db.Text // note interne admin (non visible du client)
+
   status OrderStatus @default(NOUVELLE)
 
   createdAt DateTime @default(now())

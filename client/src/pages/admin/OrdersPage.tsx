@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAdminOrders, useUpdateOrderStatus } from "../../hooks/useAdminOrders";
+import { useAdminOrders, useUpdateOrderNote, useUpdateOrderStatus } from "../../hooks/useAdminOrders";
 import { OrderTable } from "../../components/admin/OrderTable";
 import { OrderDetailModal } from "../../components/admin/OrderDetailModal";
 import { ORDER_STATUS_OPTIONS } from "../../components/admin/OrderStatusBadge";
@@ -16,6 +16,7 @@ export function OrdersPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const { data, isLoading } = useAdminOrders({ status: status || undefined, search: search || undefined });
   const updateStatus = useUpdateOrderStatus();
+  const updateNote = useUpdateOrderNote();
 
   const selectedOrder = data?.orders.find((o) => o.id === selectedOrderId) ?? null;
 
@@ -52,12 +53,15 @@ export function OrdersPage() {
           <OrderTable
             orders={data?.orders ?? []}
             onStatusChange={(id, newStatus) => updateStatus.mutate({ id, status: newStatus })}
+            onNoteChange={(id, note) => updateNote.mutate({ id, note })}
             onRowClick={(order) => setSelectedOrderId(order.id)}
           />
         )}
       </Card>
 
-      {selectedOrder && <OrderDetailModal order={selectedOrder} onClose={() => setSelectedOrderId(null)} />}
+      {selectedOrder && (
+        <OrderDetailModal key={selectedOrder.id} order={selectedOrder} onClose={() => setSelectedOrderId(null)} />
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import * as orderService from "../services/order.service";
-import { updateOrderStatusSchema } from "../validators/order.validator";
+import { updateOrderNoteSchema, updateOrderStatusSchema } from "../validators/order.validator";
 import type { OrderStatus } from "@prisma/client";
 
 export async function listOrders(req: Request, res: Response) {
@@ -21,5 +21,11 @@ export async function getOrder(req: Request, res: Response) {
 export async function updateStatus(req: Request, res: Response) {
   const { status } = updateOrderStatusSchema.parse(req.body);
   const order = await orderService.updateOrderStatus(req.params.id, status);
+  res.json(order);
+}
+
+export async function updateNote(req: Request, res: Response) {
+  const { note } = updateOrderNoteSchema.parse(req.body);
+  const order = await orderService.updateOrderNote(req.params.id, note);
   res.json(order);
 }

@@ -133,6 +133,7 @@ export interface Order {
   items: OrderItem[];
   deliveryFeeSnapshot: number;
   totalSnapshot: number;
+  adminNote: string;
   status: OrderStatus;
   createdAt: string;
 }

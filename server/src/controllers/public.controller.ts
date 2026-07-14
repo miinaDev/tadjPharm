@@ -30,13 +30,19 @@ export async function listWilayas(_req: Request, res: Response) {
   res.json(wilayas);
 }
 
+// La note interne admin ne doit jamais etre exposee au client.
+function stripAdminNote(order: any) {
+  const { adminNote: _adminNote, ...rest } = order;
+  return rest;
+}
+
 export async function createOrder(req: Request, res: Response) {
   const input = createOrderSchema.parse(req.body);
   const order = await orderService.createOrder(input);
-  res.status(201).json(order);
+  res.status(201).json(stripAdminNote(order));
 }
 
 export async function getOrder(req: Request, res: Response) {
   const order = await orderService.getOrderById(req.params.id);
-  res.json(order);
+  res.json(stripAdminNote(order));
 }

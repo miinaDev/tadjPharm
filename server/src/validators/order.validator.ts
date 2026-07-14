@@ -33,3 +33,7 @@ export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export const updateOrderStatusSchema = z.object({
   status: z.enum(["NOUVELLE", "CONFIRMEE", "EXPEDIEE", "LIVREE", "ANNULEE"]),
 });
+
+export const updateOrderNoteSchema = z.object({
+  note: z.string().max(2000).default(""),
+});

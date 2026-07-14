@@ -210,3 +210,11 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
   const updated = await prisma.order.update({ where: { id }, data: { status }, include: ORDER_INCLUDE });
   return serializeOrder(updated);
 }
+
+export async function updateOrderNote(id: string, note: string) {
+  const order = await prisma.order.findUnique({ where: { id } });
+  if (!order) throw new HttpError(404, "Commande introuvable");
+
+  const updated = await prisma.order.update({ where: { id }, data: { adminNote: note }, include: ORDER_INCLUDE });
+  return serializeOrder(updated);
+}

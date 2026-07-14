@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Order, OrderStatus } from "../../types";
 import { StatusSelect } from "./OrderStatusBadge";
 import { PriceTag } from "../product/PriceTag";
@@ -6,6 +7,7 @@ import { EmptyState } from "../common/EmptyState";
 interface OrderTableProps {
   orders: Order[];
   onStatusChange: (id: string, status: OrderStatus) => void;
+  onNoteChange: (id: string, note: string) => void;
   onRowClick: (order: Order) => void;
 }
 
@@ -16,7 +18,29 @@ function productSummary(order: Order) {
   return `${first} +${order.items.length - 1} autre${order.items.length > 2 ? "s" : ""}`;
 }
 
-export function OrderTable({ orders, onStatusChange, onRowClick }: OrderTableProps) {
+// Champ note editable directement dans le tableau : enregistre a la perte de focus (ou touche Entree) si modifie.
+function NoteCell({ order, onNoteChange }: { order: Order; onNoteChange: (id: string, note: string) => void }) {
+  const [note, setNote] = useState(order.adminNote ?? "");
+  const dirty = note !== (order.adminNote ?? "");
+  return (
+    <input
+      type="text"
+      value={note}
+      onChange={(e) => setNote(e.target.value)}
+      onBlur={() => {
+        if (dirty) onNoteChange(order.id, note);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") e.currentTarget.blur();
+      }}
+      maxLength={2000}
+      placeholder="Ajouter une note..."
+      className="w-full min-w-[180px] rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+    />
+  );
+}
+
+export function OrderTable({ orders, onStatusChange, onNoteChange, onRowClick }: OrderTableProps) {
   if (orders.length === 0) {
     return (
       <div className="p-6">
@@ -27,7 +51,7 @@ export function OrderTable({ orders, onStatusChange, onRowClick }: OrderTablePro
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[760px] text-left text-sm">
+      <table className="w-full min-w-[960px] text-left text-sm">
         <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
           <tr>
             <th className="px-4 py-3 font-medium">Date</th>
@@ -36,6 +60,7 @@ export function OrderTable({ orders, onStatusChange, onRowClick }: OrderTablePro
             <th className="px-4 py-3 font-medium">Wilaya</th>
             <th className="px-4 py-3 font-medium">Total</th>
             <th className="px-4 py-3 font-medium">Statut</th>
+            <th className="px-4 py-3 font-medium">Note</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -57,6 +82,9 @@ export function OrderTable({ orders, onStatusChange, onRowClick }: OrderTablePro
               </td>
               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                 <StatusSelect status={order.status} onChange={(status) => onStatusChange(order.id, status)} />
+              </td>
+              <td className="px-4 py-3 align-middle" onClick={(e) => e.stopPropagation()}>
+                <NoteCell order={order} onNoteChange={onNoteChange} />
               </td>
             </tr>
           ))}

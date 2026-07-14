@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { Order } from "../../types";
+import { useUpdateOrderNote } from "../../hooks/useAdminOrders";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { PriceTag } from "../product/PriceTag";
 import { IconClose } from "../ui/icons";
@@ -24,6 +25,10 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 export function OrderDetailModal({ order, onClose }: { order: Order; onClose: () => void }) {
   const subtotal = order.items.reduce((sum, item) => sum + item.unitPriceSnapshot * item.quantity, 0);
+
+  const updateNote = useUpdateOrderNote();
+  const [note, setNote] = useState(order.adminNote ?? "");
+  const noteDirty = note !== (order.adminNote ?? "");
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 sm:items-center sm:p-4" onClick={onClose}>
@@ -91,6 +96,28 @@ export function OrderDetailModal({ order, onClose }: { order: Order; onClose: ()
             <div className="mt-1 flex justify-between border-t border-slate-200 pt-1.5 text-sm font-semibold text-slate-900">
               <span>Total</span>
               <PriceTag amount={order.totalSnapshot} />
+            </div>
+          </Section>
+
+          <Section title="Note interne">
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              maxLength={2000}
+              placeholder="Ajouter une note (visible uniquement par l'admin)..."
+              className="w-full resize-y rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+            <div className="mt-2 flex items-center justify-end gap-2">
+              {noteDirty && !updateNote.isPending && <span className="text-xs text-amber-600">Non enregistre</span>}
+              <button
+                type="button"
+                onClick={() => updateNote.mutate({ id: order.id, note })}
+                disabled={!noteDirty || updateNote.isPending}
+                className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {updateNote.isPending ? "Enregistrement..." : "Enregistrer la note"}
+              </button>
             </div>
           </Section>
         </div>

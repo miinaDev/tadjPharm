@@ -16,3 +16,14 @@ export function useUpdateOrderStatus() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "orders"] }),
   });
 }
+
+export function useUpdateOrderNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, note }: { id: string; note: string }) => adminOrdersApi.updateNote(id, note),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+    },
+  });
+}

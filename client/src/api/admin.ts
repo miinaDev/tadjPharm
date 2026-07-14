@@ -108,6 +108,7 @@ export const adminOrdersApi = {
     return apiClient.get<{ orders: Order[]; total: number }>(`/api/admin/orders?${query.toString()}`);
   },
   updateStatus: (id: string, status: OrderStatus) => apiClient.patch<Order>(`/api/admin/orders/${id}/status`, { status }),
+  updateNote: (id: string, note: string) => apiClient.patch<Order>(`/api/admin/orders/${id}/note`, { note }),
 };
 
 export const adminWilayasApi = {

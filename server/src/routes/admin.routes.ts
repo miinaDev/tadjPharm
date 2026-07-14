@@ -43,6 +43,7 @@ adminRouter.delete("/images/:imageId", asyncHandler(productsController.deleteIma
 adminRouter.get("/orders", asyncHandler(ordersController.listOrders));
 adminRouter.get("/orders/:id", asyncHandler(ordersController.getOrder));
 adminRouter.patch("/orders/:id/status", asyncHandler(ordersController.updateStatus));
+adminRouter.patch("/orders/:id/note", asyncHandler(ordersController.updateNote));
 
 // Wilayas & bureaux de livraison
 adminRouter.get("/wilayas/catalog", asyncHandler(wilayasController.getWilayaCatalog));
