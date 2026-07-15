@@ -8,6 +8,8 @@ const PHONES = [
 ];
 const CONTACT = {
   email: "contact@tadjpharm.com",
+  address: "Residence panorama, Boulevard Millénium, Oran 31130",
+  mapUrl: "https://maps.app.goo.gl/esuwWiPtpDvwNrjD9",
 };
 
 const SOCIALS = [
@@ -33,16 +35,33 @@ function IconMail(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+function IconMapPin(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0118 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
 export function Footer() {
   return (
     <footer className="mt-8 border-t border-slate-200 bg-white">
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 px-4 py-8 sm:px-6 md:flex-row md:items-center md:justify-between">
         {/* Marque */}
-        <div className="text-center md:text-left">
+        <div className="flex flex-col items-center md:items-start">
           <p className="text-lg font-extrabold tracking-tight text-slate-900">
             Tadj<span className="text-brand-500">Pharm</span>
           </p>
           <p className="mt-1 text-xs text-slate-400">Matériel paramédical livré partout en Algérie.</p>
+          <a
+            href={CONTACT.mapUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 text-center text-xs font-medium text-slate-600 transition hover:text-brand-600 md:text-left"
+          >
+            {CONTACT.address}
+          </a>
         </div>
 
         {/* Contact */}
@@ -66,7 +85,7 @@ export function Footer() {
           </a>
         </div>
 
-        {/* Reseaux sociaux */}
+        {/* Reseaux sociaux + localisation */}
         <div className="flex items-center gap-2">
           {SOCIALS.map(({ label, href, Icon }) => (
             <a
@@ -80,6 +99,15 @@ export function Footer() {
               <Icon className="h-5 w-5" />
             </a>
           ))}
+          <a
+            href={CONTACT.mapUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Nous localiser sur Google Maps"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-brand-500 hover:text-white"
+          >
+            <IconMapPin className="h-5 w-5" />
+          </a>
         </div>
       </div>
 
