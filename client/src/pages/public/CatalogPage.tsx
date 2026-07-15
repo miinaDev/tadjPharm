@@ -94,9 +94,9 @@ export function CatalogPage() {
         <>
           <ProductGrid
             products={products}
-            emptyTitle={isSearching ? "Aucun resultat" : undefined}
+            emptyTitle={isSearching ? "Aucun résultat" : undefined}
             emptyDescription={
-              isSearching ? `Aucun produit ne correspond a "${debouncedSearch}". Essayez un autre terme.` : undefined
+              isSearching ? `Aucun produit ne correspond à « ${debouncedSearch} ». Essayez un autre terme.` : undefined
             }
           />
           {totalPages > 1 && (
@@ -113,7 +113,7 @@ export function CatalogPage() {
                   onClick={() => goToPage(page - 1)}
                 >
                   <IconChevronLeft className="h-4 w-4" />
-                  Precedent
+                  Précédent
                 </Button>
 
                 <div className="flex items-center gap-1.5 px-1 text-slate-600">
@@ -132,7 +132,7 @@ export function CatalogPage() {
                         e.currentTarget.blur();
                       }
                     }}
-                    aria-label="Numero de page"
+                    aria-label="Numéro de page"
                     className="h-8 w-14 rounded-lg border border-slate-200 bg-white px-2 text-center text-sm font-medium text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/10 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
                   <span>sur {totalPages}</span>

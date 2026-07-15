@@ -151,9 +151,7 @@ export function DashboardPage() {
                         {new Date(order.createdAt).toLocaleDateString("fr-FR")}
                       </td>
                       <td className="px-4 py-2.5">
-                        <p className="font-medium text-slate-900">
-                          {order.firstName} {order.lastName}
-                        </p>
+                        <p className="font-medium text-slate-900">{order.fullName}</p>
                         <p className="text-xs text-slate-400">{order.phone}</p>
                       </td>
                       <td className="px-4 py-2.5 text-slate-600">{productSummary(order)}</td>

@@ -14,6 +14,13 @@
   --color-brand-800: #164a88; /* marine du logo */
   --color-brand-900: #15386a; /* marine profond */
 
+  /* Or « couronne » — l'accent de marque (tadj = couronne, comme dans le logo).
+     Usage volontairement rare : icone couronne, compteur panier, chiffre cle du hero,
+     soulignement de navigation active. Jamais en aplat de fond. */
+  --color-crown-300: #fcd34d;
+  --color-crown-400: #fbbf24;
+  --color-crown-500: #f59e0b;
+
   /* Soft app canvas */
   --color-canvas: #eef2f8;
 
@@ -24,4 +31,34 @@ body {
   margin: 0;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Micro-animations du hero : entree en cascade + lent zoom de la photo.
+   Entierement desactivees si l'utilisateur prefere reduire le mouvement
+   (les elements restent alors simplement visibles, sans animation). */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes hero-zoom {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.07);
+    }
+  }
+  .anim-rise {
+    animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .anim-hero-zoom {
+    animation: hero-zoom 26s ease-out both;
+  }
 }

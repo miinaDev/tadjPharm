@@ -6,13 +6,19 @@ import { clearAdminCookie, getAdminTokenFromCookie, setAdminCookie, signAdminTok
 import { HttpError } from "../middleware/errorHandler";
 
 export async function login(req: Request, res: Response) {
-  const { email, password } = loginSchema.parse(req.body);
+  const { password } = loginSchema.parse(req.body);
 
-  const admin = await prisma.adminUser.findUnique({ where: { email } });
-  if (!admin) throw new HttpError(401, "Identifiants invalides");
-
-  const valid = await comparePassword(password, admin.passwordHash);
-  if (!valid) throw new HttpError(401, "Identifiants invalides");
+  // Un seul admin : le mot de passe fait office d'identifiant. On identifie le compte
+  // par le mot de passe (la boucle reste correcte meme s'il existait plusieurs comptes).
+  const admins = await prisma.adminUser.findMany();
+  let admin: (typeof admins)[number] | null = null;
+  for (const candidate of admins) {
+    if (await comparePassword(password, candidate.passwordHash)) {
+      admin = candidate;
+      break;
+    }
+  }
+  if (!admin) throw new HttpError(401, "Mot de passe invalide");
 
   const token = signAdminToken({ sub: admin.id, email: admin.email });
   setAdminCookie(res, token);

@@ -20,7 +20,7 @@ export function CatalogSearch({ value, onChange }: CatalogSearchProps) {
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Rechercher un produit, une categorie..."
+        placeholder="Rechercher un produit, une catégorie..."
         aria-label="Rechercher dans le catalogue"
         className="w-full rounded-full border border-slate-200 bg-white py-3 pl-11 pr-11 text-sm text-slate-800 shadow-sm transition focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/10"
       />

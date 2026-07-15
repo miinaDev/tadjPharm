@@ -70,12 +70,21 @@ export function OrderTable({ orders, onStatusChange, onNoteChange, onRowClick }:
                 {new Date(order.createdAt).toLocaleDateString("fr-FR")}
               </td>
               <td className="px-4 py-3">
-                <p className="font-medium text-slate-900">
-                  {order.firstName} {order.lastName}
-                </p>
+                <p className="font-medium text-slate-900">{order.fullName}</p>
                 <p className="text-xs text-slate-400">{order.phone}</p>
               </td>
-              <td className="px-4 py-3 text-slate-600">{productSummary(order)}</td>
+              <td className="px-4 py-3 text-slate-600">
+                {productSummary(order)}
+                {order.specialDelivery && (
+                  <span
+                    className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      order.deliveryFeeSnapshot > 0 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-600"
+                    }`}
+                  >
+                    {order.deliveryFeeSnapshot > 0 ? "Livraison spéciale" : "Livraison à définir"}
+                  </span>
+                )}
+              </td>
               <td className="px-4 py-3 text-slate-600">{order.wilayaNameSnapshot || order.wilaya?.name || "-"}</td>
               <td className="px-4 py-3 font-medium text-slate-900">
                 <PriceTag amount={order.totalSnapshot} />

@@ -10,7 +10,6 @@ export function LoginPage() {
   const { admin, loading, login } = useAdminAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +25,7 @@ export function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await login(email, password);
+      await login(password);
       navigate("/admin");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Connexion impossible");
@@ -47,9 +46,6 @@ export function LoginPage() {
 
         <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-4">
-            <Field label="Email" htmlFor="email">
-              <Input id="email" required type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </Field>
             <Field label="Mot de passe" htmlFor="password">
               <div className="relative">
                 <Input

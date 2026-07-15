@@ -42,7 +42,7 @@ export function Footer() {
           <p className="text-lg font-extrabold tracking-tight text-slate-900">
             Tadj<span className="text-brand-500">Pharm</span>
           </p>
-          <p className="mt-1 text-xs text-slate-400">Materiel paramedical livre partout en Algerie.</p>
+          <p className="mt-1 text-xs text-slate-400">Matériel paramédical livré partout en Algérie.</p>
         </div>
 
         {/* Contact */}
@@ -84,7 +84,7 @@ export function Footer() {
       </div>
 
       <div className="border-t border-slate-100 py-4 text-center text-xs text-slate-400">
-        <p>&copy; {new Date().getFullYear()} TadjPharm. Commande sans compte, confirmation par telephone.</p>
+        <p>&copy; {new Date().getFullYear()} TadjPharm. Commande sans compte, confirmation par téléphone.</p>
       </div>
     </footer>
   );

@@ -6,7 +6,7 @@ import type { AdminUser } from "../types";
 interface AdminAuthContextValue {
   admin: AdminUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -29,8 +29,8 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  async function login(email: string, password: string) {
-    const user = await adminAuthApi.login(email, password);
+  async function login(password: string) {
+    const user = await adminAuthApi.login(password);
     setAdmin(user);
   }
 

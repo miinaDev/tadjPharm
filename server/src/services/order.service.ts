@@ -98,14 +98,18 @@ export async function createOrder(input: CreateOrderInput) {
     if (!variant.product.isAvailable) {
       throw new HttpError(409, `Produit non disponible : ${variant.product.name}`);
     }
-    // Livraison speciale : ce produit ne passe pas par la commande en ligne (le client contacte la boutique).
-    if (!variant.product.isDeliverable) {
-      throw new HttpError(409, `Livraison speciale, contactez la boutique : ${variant.product.name}`);
-    }
     // La combinaison choisie (couleur/taille/volume) doit etre active.
     if (!variant.isActive) {
       throw new HttpError(409, `Cette variante n'est plus disponible : ${variant.product.name}`);
     }
+  }
+
+  // Livraison speciale : si au moins un produit n'est pas livrable normalement, on ne calcule
+  // pas le tarif de livraison (le client est prevenu, l'admin le fixera ensuite). Determine
+  // cote serveur d'apres le produit reel, pas d'apres le client.
+  const specialDelivery = items.some((item) => !variantById.get(item.variantId)!.product.isDeliverable);
+  if (specialDelivery) {
+    deliveryFeeNum = 0;
   }
 
   const itemsWithPrice = items.map((item) => {
@@ -125,9 +129,7 @@ export async function createOrder(input: CreateOrderInput) {
   // Plus aucun stock a decrementer : on cree simplement la commande.
   const order = await prisma.order.create({
     data: {
-      firstName: input.firstName,
-      lastName: input.lastName,
-      email: input.email,
+      fullName: input.fullName,
       phone: input.phone,
       wilayaId: input.wilayaId,
       wilayaNameSnapshot: wilaya.name,
@@ -137,6 +139,7 @@ export async function createOrder(input: CreateOrderInput) {
       bureauNameSnapshot,
       deliveryFeeSnapshot: deliveryFeeNum,
       totalSnapshot: totalNum,
+      specialDelivery,
       items: {
         create: itemsWithPrice.map((item) => ({
           variantId: item.variantId,
@@ -180,8 +183,7 @@ export async function listAdminOrders(params: {
     wilayaId: params.wilayaId,
     OR: params.search
       ? [
-          { firstName: { contains: params.search, mode: "insensitive" as const } },
-          { lastName: { contains: params.search, mode: "insensitive" as const } },
+          { fullName: { contains: params.search, mode: "insensitive" as const } },
           { phone: { contains: params.search, mode: "insensitive" as const } },
         ]
       : undefined,
@@ -216,5 +218,23 @@ export async function updateOrderNote(id: string, note: string) {
   if (!order) throw new HttpError(404, "Commande introuvable");
 
   const updated = await prisma.order.update({ where: { id }, data: { adminNote: note }, include: ORDER_INCLUDE });
+  return serializeOrder(updated);
+}
+
+// L'admin fixe (ou corrige) le tarif de livraison d'une commande — notamment pour les
+// commandes a livraison speciale, ou il est laisse en attente a la creation. Le total est
+// recalcule a partir du sous-total fige des articles + le nouveau tarif.
+export async function updateOrderDeliveryFee(id: string, deliveryFee: number) {
+  const order = await prisma.order.findUnique({ where: { id }, include: { items: true } });
+  if (!order) throw new HttpError(404, "Commande introuvable");
+
+  const subtotal = order.items.reduce((sum, item) => sum + (toNumber(item.unitPriceSnapshot) ?? 0) * item.quantity, 0);
+  const total = subtotal + deliveryFee;
+
+  const updated = await prisma.order.update({
+    where: { id },
+    data: { deliveryFeeSnapshot: deliveryFee, totalSnapshot: total },
+    include: ORDER_INCLUDE,
+  });
   return serializeOrder(updated);
 }

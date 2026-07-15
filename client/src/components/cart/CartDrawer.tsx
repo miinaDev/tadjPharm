@@ -10,6 +10,7 @@ import { resolveMediaUrl } from "../../api/client";
 export function CartDrawer() {
   const cart = useCart();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const hasSpecialDelivery = cart.items.some((item) => item.isDeliverable === false);
 
   if (!cart.isOpen) return null;
 
@@ -100,7 +101,11 @@ export function CartDrawer() {
                 <PriceTag amount={cart.totalAmount} className="mt-1 block text-sm font-semibold" />
               </div>
             </div>
-            <p className="mb-3 text-center text-[11px] text-slate-400">Frais de livraison calcules selon votre wilaya a l'etape suivante.</p>
+            <p className="mb-3 text-center text-[11px] text-slate-400">
+              {hasSpecialDelivery
+                ? "Livraison speciale : le tarif vous sera communique par la parapharmacie."
+                : "Frais de livraison calcules selon votre wilaya a l'etape suivante."}
+            </p>
             <button
               type="button"
               onClick={() => setCheckoutOpen(true)}
@@ -121,6 +126,7 @@ export function CartDrawer() {
             imageUrl: item.imageUrl,
             unitPrice: item.unitPrice,
             quantity: item.quantity,
+            isDeliverable: item.isDeliverable,
           }))}
           onQuantityChange={cart.updateQuantity}
           onRemove={cart.removeItem}

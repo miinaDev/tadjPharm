@@ -35,6 +35,7 @@ function buildCartItem(product: Product, variant: ProductVariant, unitPrice: num
     variantLabel: variantLabel(variant),
     imageUrl: product.images[0]?.url ?? null,
     unitPrice,
+    isDeliverable: product.isDeliverable,
   };
 }
 
@@ -80,8 +81,9 @@ export function ProductDetailPage() {
   const regular = selectedVariant?.priceOverride ?? product.basePrice;
   const promo = hasPromo(product);
   const price = discountedPrice(regular, product.discountPercent); // prix effectif (panier + checkout)
-  // Achetable si le produit est disponible, livrable normalement et que la combinaison choisie est resolue ET active.
-  const canBuy = Boolean(product.isAvailable && product.isDeliverable && selectedVariant && selectedVariant.isActive);
+  // Achetable si le produit est disponible et que la combinaison choisie est resolue ET active.
+  // Les produits a livraison speciale restent commandables (le tarif de livraison est fixe ensuite).
+  const canBuy = Boolean(product.isAvailable && selectedVariant && selectedVariant.isActive);
   const maxQuantity = MAX_QUANTITY;
   const hasOptions = product.hasColors || product.hasSizes || product.hasVolumes;
 
@@ -157,7 +159,33 @@ export function ProductDetailPage() {
             />
           )}
 
-          {!product.isDeliverable ? (
+          <div>
+            <p className="mb-3 text-sm font-semibold text-slate-800">Quantite</p>
+            <div className="flex items-center gap-4">
+              <QuantityStepper quantity={quantity} max={maxQuantity} onChange={setQuantity} />
+            </div>
+          </div>
+
+          {!product.isAvailable && (
+            <p className="text-sm font-medium text-red-500">Ce produit n'est pas disponible a la commande pour le moment.</p>
+          )}
+
+          {product.isAvailable && selectedVariant && !selectedVariant.isActive && (
+            <p className="text-sm font-medium text-red-500">Cette combinaison n'est pas disponible.</p>
+          )}
+
+          {selectionHint && (
+            <div className="flex items-center gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">
+              <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+              {selectionHint}
+            </div>
+          )}
+
+          {/* Livraison speciale : information non bloquante. On peut commander normalement ;
+              le tarif de livraison sera communique par la parapharmacie. */}
+          {!product.isDeliverable && (
             <div className="flex flex-col gap-1.5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-amber-800">
                 <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -167,55 +195,30 @@ export function ProductDetailPage() {
                 Livraison speciale
               </p>
               <p className="text-sm leading-relaxed text-amber-700">
-                Ce produit necessite une livraison speciale. Contactez la boutique pour obtenir un tarif de livraison (coordonnees en bas de page).
+                Vous pouvez commander normalement. Le tarif de livraison de ce produit vous sera communique par la
+                parapharmacie lors de la confirmation.
               </p>
             </div>
-          ) : (
-            <>
-              <div>
-                <p className="mb-3 text-sm font-semibold text-slate-800">Quantite</p>
-                <div className="flex items-center gap-4">
-                  <QuantityStepper quantity={quantity} max={maxQuantity} onChange={setQuantity} />
-                </div>
-              </div>
-
-              {!product.isAvailable && (
-                <p className="text-sm font-medium text-red-500">Ce produit n'est pas disponible a la commande pour le moment.</p>
-              )}
-
-              {product.isAvailable && selectedVariant && !selectedVariant.isActive && (
-                <p className="text-sm font-medium text-red-500">Cette combinaison n'est pas disponible.</p>
-              )}
-
-              {selectionHint && (
-                <div className="flex items-center gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                  </svg>
-                  {selectionHint}
-                </div>
-              )}
-
-              <div className="mt-1 flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  disabled={!canBuy}
-                  onClick={handleAddToCart}
-                  className="inline-flex w-full items-center justify-center rounded-full bg-brand-50 px-6 py-3.5 text-sm font-semibold text-brand-600 transition hover:bg-brand-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                >
-                  {addedFlash ? "Ajoute ✓" : "Ajouter au panier"}
-                </button>
-                <button
-                  type="button"
-                  disabled={!canBuy}
-                  onClick={() => setOrderModalOpen(true)}
-                  className="inline-flex w-full items-center justify-center rounded-full bg-brand-500 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/30 transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
-                >
-                  Acheter
-                </button>
-              </div>
-            </>
           )}
+
+          <div className="mt-1 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              disabled={!canBuy}
+              onClick={handleAddToCart}
+              className="inline-flex w-full items-center justify-center rounded-full bg-brand-50 px-6 py-3.5 text-sm font-semibold text-brand-600 transition hover:bg-brand-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            >
+              {addedFlash ? "Ajoute ✓" : "Ajouter au panier"}
+            </button>
+            <button
+              type="button"
+              disabled={!canBuy}
+              onClick={() => setOrderModalOpen(true)}
+              className="inline-flex w-full items-center justify-center rounded-full bg-brand-500 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/30 transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
+            >
+              Acheter
+            </button>
+          </div>
         </div>
       </div>
 

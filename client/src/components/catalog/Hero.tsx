@@ -1,161 +1,9 @@
-import type { ReactNode } from "react";
-
 function scrollToCatalogue() {
-  document.getElementById("catalogue")?.scrollIntoView({ behavior: "auto", block: "start" });
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.getElementById("catalogue")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
 }
 
-/* ---------- Geometrie hexagonale (sommets en haut/bas, comme le logo) ---------- */
-
-function hexPoints(cx: number, cy: number, r: number) {
-  return Array.from({ length: 6 }, (_, k) => {
-    const a = (Math.PI / 180) * (60 * k - 30);
-    return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
-  }).join(" ");
-}
-
-/* Icones medicales 24x24 (trait), affichees au centre des hexagones */
-const HEX_ICONS: Record<string, ReactNode> = {
-  pulse: <path d="M3 12.5h4l2-5 3 9 2.5-6.5 1.5 2.5H21" />,
-  shieldCross: (
-    <>
-      <path d="M12 3.5l6.5 2.6v4.6c0 4.2-2.8 7-6.5 8.4-3.7-1.4-6.5-4.2-6.5-8.4V6.1L12 3.5z" />
-      <path d="M12 8.5v5M9.5 11h5" />
-    </>
-  ),
-  bandage: (
-    <>
-      <rect x="2.8" y="8.2" width="18.4" height="7.6" rx="3.8" transform="rotate(-45 12 12)" />
-      <path d="M10.6 10.6h0M13.4 10.6h0M10.6 13.4h0M13.4 13.4h0M12 12h0" strokeWidth={2.2} />
-    </>
-  ),
-  flask: (
-    <>
-      <path d="M9.5 3h5M11 3v5.2L5.6 17a2 2 0 001.8 3h9.2a2 2 0 001.8-3L13 8.2V3" />
-      <path d="M7.8 14.5h8.4" />
-    </>
-  ),
-  capsule: (
-    <>
-      <rect x="3.5" y="8.5" width="17" height="7" rx="3.5" />
-      <path d="M12 8.5v7" />
-    </>
-  ),
-  syringe: (
-    <>
-      <path d="M19.5 4.5L17 7M20.5 8.5l-5-5M16 6l3 3-9 9-3-3 9-9zM7 17l-2.5 2.5" />
-      <path d="M11.5 9.5l1.5 1.5M9 12l1.5 1.5" />
-    </>
-  ),
-  firstAid: (
-    <>
-      <rect x="3.5" y="7" width="17" height="13" rx="2" />
-      <path d="M9 7V5.5A1.5 1.5 0 0110.5 4h3A1.5 1.5 0 0115 5.5V7M12 10.5v6M9 13.5h6" />
-    </>
-  ),
-  clipboard: (
-    <>
-      <rect x="5" y="4" width="14" height="17" rx="2" />
-      <rect x="9" y="2.5" width="6" height="4" rx="1" />
-      <path d="M8.5 11h7M8.5 14.5h5" />
-    </>
-  ),
-  thermometer: (
-    <>
-      <path d="M12 4a2 2 0 00-2 2v8.2a4 4 0 104 0V6a2 2 0 00-2-2z" />
-      <path d="M12 9.5v4.5" />
-    </>
-  ),
-  crossBold: <path d="M9.3 3.8h5.4v5.5h5.5v5.4h-5.5v5.5H9.3v-5.5H3.8V9.3h5.5V3.8z" fill="currentColor" stroke="none" />,
-  heart: <path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0112 7.2a4.2 4.2 0 017.5 2.6C19.5 15.4 12 20 12 20z" />,
-};
-
-interface HexProps {
-  cx: number;
-  cy: number;
-  r: number;
-  className: string; // utilitaires fill-* / stroke-*
-  strokeWidth?: number;
-  icon?: string;
-  iconClass?: string; // couleur de l'icone (text-*)
-}
-
-function Hex({ cx, cy, r, className, strokeWidth = 0, icon, iconClass = "text-white" }: HexProps) {
-  const box = r * 0.9;
-  return (
-    <g>
-      <polygon points={hexPoints(cx, cy, r)} className={className} strokeWidth={strokeWidth} />
-      {icon && (
-        <g
-          className={iconClass}
-          transform={`translate(${cx - box / 2} ${cy - box / 2}) scale(${box / 24})`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.7}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          {HEX_ICONS[icon]}
-        </g>
-      )}
-    </g>
-  );
-}
-
-/* Nid d'abeille d'icones medicales — motif plat inspire du logo et de la maquette */
-function Honeycomb() {
-  return (
-    <svg viewBox="0 0 520 396" className="h-auto w-full" role="img" aria-label="Illustration medicale en hexagones">
-      {/* rangee 1 */}
-      <Hex cx={211} cy={64} r={56} className="fill-brand-500" icon="pulse" />
-      <Hex cx={308} cy={64} r={56} className="fill-brand-800" icon="shieldCross" />
-      <Hex cx={405} cy={64} r={56} className="fill-brand-200" icon="bandage" iconClass="text-brand-800" />
-      {/* rangee 2 */}
-      <Hex cx={162.5} cy={148} r={56} className="fill-brand-100" icon="flask" iconClass="text-brand-600" />
-      <Hex cx={259.5} cy={148} r={56} className="fill-white stroke-brand-300" strokeWidth={2.5} icon="capsule" iconClass="text-brand-500" />
-      <Hex cx={356.5} cy={148} r={56} className="fill-brand-400" icon="syringe" />
-      <Hex cx={453.5} cy={148} r={56} className="fill-brand-50" />
-      {/* rangee 3 */}
-      <Hex cx={211} cy={232} r={56} className="fill-brand-900" icon="firstAid" />
-      <Hex cx={308} cy={232} r={56} className="fill-brand-300" icon="clipboard" iconClass="text-brand-900" />
-      <Hex cx={405} cy={232} r={56} className="fill-white stroke-brand-200" strokeWidth={2.5} icon="thermometer" iconClass="text-brand-500" />
-      {/* rangee 4 */}
-      <Hex cx={259.5} cy={316} r={56} className="fill-brand-500" icon="crossBold" />
-      <Hex cx={356.5} cy={316} r={56} className="fill-brand-100" icon="heart" iconClass="text-brand-600" />
-      {/* hexagones decoratifs */}
-      <Hex cx={120} cy={30} r={15} className="fill-none stroke-brand-300" strokeWidth={2} />
-      <Hex cx={492} cy={40} r={13} className="fill-none stroke-brand-200" strokeWidth={2} />
-      <Hex cx={108} cy={236} r={9} className="fill-brand-300" />
-      <Hex cx={478} cy={306} r={19} className="fill-none stroke-brand-300" strokeWidth={2} />
-    </svg>
-  );
-}
-
-/* Version mobile : un bandeau compact de 4 hexagones en zigzag */
-function HoneycombMobile() {
-  return (
-    <svg viewBox="0 0 284 108" className="mx-auto h-auto w-full max-w-[300px]" role="img" aria-label="Illustration medicale en hexagones">
-      <Hex cx={40} cy={42} r={32} className="fill-brand-500" icon="pulse" />
-      <Hex cx={108} cy={66} r={32} className="fill-brand-800" icon="shieldCross" />
-      <Hex cx={176} cy={42} r={32} className="fill-white stroke-brand-300" strokeWidth={2} icon="capsule" iconClass="text-brand-500" />
-      <Hex cx={244} cy={66} r={32} className="fill-brand-100" icon="heart" iconClass="text-brand-600" />
-      <Hex cx={270} cy={16} r={9} className="fill-none stroke-brand-300" strokeWidth={2} />
-      <Hex cx={12} cy={90} r={7} className="fill-brand-300" />
-    </svg>
-  );
-}
-
-/* Grille de points decorative (motif flat de la maquette) */
-function Dots({ className }: { className: string }) {
-  return (
-    <div className={`pointer-events-none grid w-fit grid-cols-8 gap-1.5 ${className}`} aria-hidden>
-      {Array.from({ length: 32 }).map((_, i) => (
-        <span key={i} className="h-1 w-1 rounded-full bg-brand-200" />
-      ))}
-    </div>
-  );
-}
-
-/* Couronne du logo — rappel de la signature "la couronne de votre sante" */
+/* Couronne du logo — rappel de la signature « la couronne de votre santé » */
 function IconCrown({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
@@ -164,14 +12,6 @@ function IconCrown({ className }: { className?: string }) {
   );
 }
 
-function IconShield() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.7}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
-    </svg>
-  );
-}
 function IconTruck() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.7}>
@@ -190,87 +30,112 @@ function IconWallet() {
     </svg>
   );
 }
-
-/* Pastille hexagonale derriere les icones de la barre d'avantages */
-function HexChip({ children, className = "h-11 w-11" }: { children: ReactNode; className?: string }) {
+function IconHome() {
   return (
-    <span className={`relative flex shrink-0 items-center justify-center text-brand-700 ${className}`}>
-      <svg viewBox="0 0 44 48" className="absolute inset-0 h-full w-full" aria-hidden>
-        <polygon points={hexPoints(22, 24, 21)} className="fill-brand-50" />
-      </svg>
-      <span className="relative">{children}</span>
-    </span>
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.7}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.5 10.5L12 4l8.5 6.5" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5.5 9.5V20h13V9.5" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M10 20v-5.5h4V20" />
+    </svg>
   );
 }
 
+/* Uniquement des faits verifiables — pas de slogans auto-attribues. */
 const features = [
-  { icon: <IconShield />, title: "Produits certifies", sub: "Qualite garantie" },
-  { icon: <IconTruck />, title: "Livraison 69 wilayas", sub: "Partout en Algerie" },
-  { icon: <IconWallet />, title: "Paiement a la livraison", sub: "Sans avance" },
+  { icon: <IconTruck />, title: "Livraison 69 wilayas", sub: "Partout en Algérie" },
+  { icon: <IconWallet />, title: "Paiement à la livraison", sub: "En espèces, sans avance" },
+  { icon: <IconHome />, title: "À domicile ou au bureau", sub: "Vous choisissez le retrait" },
 ];
 
 export function Hero() {
   return (
-    <section className="relative mb-7 overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200/60">
-      <Dots className="absolute right-8 top-8 hidden sm:grid" />
+    <div className="mb-3">
+      {/* Full-bleed : les marges negatives font sortir la section du conteneur central
+          (calc(50% - 50vw)) pour occuper toute la largeur de l'ecran.
+          -mt-[6.25rem] = padding haut du <main> (1.5rem) + hauteur du header (4.75rem) :
+          la photo passe SOUS le header transparent, jusqu'en haut de l'ecran. */}
+      <section className="relative -mt-[6.25rem] mx-[calc(50%_-_50vw)] overflow-hidden bg-brand-900">
+        {/* Photo de la boutique : legerement desaturee pour l'accorder a la palette marine
+            (le magenta / jaune des rayonnages ne perce plus), cadree pour reduire le plafond.
+            Lent zoom (Ken Burns) desactive en prefers-reduced-motion. */}
+        <img
+          src="/TadjPharm.webp"
+          alt=""
+          fetchPriority="high"
+          className="anim-hero-zoom absolute inset-0 h-full w-full object-cover object-[50%_62%] saturate-[.68]"
+        />
+        {/* Voile marine degrade, calibre pour un contraste >= 4.5:1 (WCAG AA) du blanc
+            sur les zones claires. La droite reste plus douce (photo visible) sans devenir
+            l'aimant lumineux de la composition. */}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-b from-brand-900/85 via-brand-900/70 to-brand-900/90 lg:bg-gradient-to-r lg:from-brand-900/95 lg:via-brand-900/70 lg:to-brand-900/45"
+        />
 
-      <div className="grid items-center gap-7 p-6 sm:gap-10 sm:p-10 lg:grid-cols-[1.05fr_1fr]">
-        {/* GAUCHE — texte (centre sur mobile, aligne a gauche sur grand ecran) */}
-        <div className="relative z-10 text-center lg:text-left">
-          <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-500">
-            <IconCrown className="h-4 w-4" />
-            La couronne de votre sante
-          </span>
+        {/* Mobile : ~88svh, pour que la suite de la page depasse du pli (signal de scroll).
+            Desktop : hauteur genereuse, contenu centre verticalement.
+            pt-28 : reserve la place du header transparent pose au-dessus. */}
+        <div className="relative mx-auto flex min-h-[88vh] w-full max-w-6xl flex-col justify-center px-4 pb-20 pt-28 supports-[height:100svh]:min-h-[88svh] sm:min-h-[560px] sm:px-6 sm:pb-24 sm:pt-32 lg:min-h-[640px]">
+          <div className="mx-auto max-w-3xl text-center lg:mx-0 lg:text-left">
+            <span className="anim-rise inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-white backdrop-blur-sm sm:text-[11px]">
+              <IconCrown className="h-3.5 w-3.5 text-crown-400" />
+              La couronne de votre santé
+            </span>
 
-          <h1 className="mt-4 font-extrabold uppercase leading-[0.95] tracking-tight">
-            <span className="block text-[2rem] text-brand-900 sm:text-5xl">Parapharmacie</span>
-            <span className="block text-[2rem] text-brand-500 sm:text-5xl">Paramedicale</span>
-          </h1>
+            {/* Le titre porte la proposition de valeur — pas le nom de la categorie.
+                clamp : taille fluide, aucun palier arbitraire, aucun debordement mobile. */}
+            <h1 className="anim-rise mt-5 text-[clamp(2.05rem,2.2vw+1.4rem,3.15rem)] font-extrabold leading-[1.08] tracking-tight text-white [animation-delay:90ms]">
+              Votre Parapharmacie{" "}
+              <span className="whitespace-nowrap text-crown-300">Connectée</span>.
+            </h1>
 
-          <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-slate-500 lg:mx-0">
-            Tout le materiel paramedical dont vous avez besoin, livre partout en Algerie.
-          </p>
+            <p className="anim-rise mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/90 [animation-delay:180ms] sm:mt-5 sm:text-lg lg:mx-0">
+              Commandez en ligne, payez à la livraison. Notre équipe vous appelle pour confirmer chaque commande.
+            </p>
 
-          <div className="mt-6 flex justify-center lg:justify-start">
-            <button
-              type="button"
-              onClick={scrollToCatalogue}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-900 px-8 py-3.5 text-sm font-semibold text-white transition hover:bg-brand-800 sm:w-auto"
-            >
-              Voir nos produits
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M13 6l6 6-6 6" />
-              </svg>
-            </button>
-          </div>
-
-          <Dots className="mt-9 hidden lg:grid" />
-        </div>
-
-        {/* DROITE — nid d'abeille complet (tablette/desktop), bandeau compact sur mobile */}
-        <div className="relative mx-auto hidden w-full max-w-[520px] sm:block">
-          <Honeycomb />
-        </div>
-        <div className="sm:hidden">
-          <HoneycombMobile />
-        </div>
-      </div>
-
-      {/* barre d'avantages — compacte en 3 colonnes sur mobile, en ligne sur grand ecran */}
-      <div className="grid grid-cols-3 border-t border-slate-100">
-        {features.map((f) => (
-          <div
-            key={f.title}
-            className="flex flex-col items-center gap-1.5 px-2 py-3.5 text-center sm:flex-row sm:gap-3 sm:px-6 sm:py-4 sm:text-left"
-          >
-            <HexChip className="h-9 w-9 sm:h-11 sm:w-11">{f.icon}</HexChip>
-            <div className="leading-tight">
-              <p className="text-[11px] font-semibold text-brand-900 sm:text-sm">{f.title}</p>
-              <p className="hidden text-xs text-slate-500 sm:block">{f.sub}</p>
+            <div className="anim-rise mt-8 flex justify-center [animation-delay:270ms] lg:justify-start">
+              <button
+                type="button"
+                onClick={scrollToCatalogue}
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-9 py-4 text-[15px] font-semibold text-white shadow-lg shadow-brand-900/20 backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40 sm:w-auto sm:text-base"
+              >
+                Voir nos produits
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </button>
             </div>
           </div>
-        ))}
+        </div>
+      </section>
+
+      {/* Barre de preuves : carte blanche a cheval sur la couture photo / page.
+          Le chevauchement cree la transition entre le hero et le catalogue
+          (et signale qu'il y a une suite sous le pli). */}
+      <div className="anim-rise relative z-10 -mt-9 [animation-delay:360ms] sm:-mt-10">
+        <div className="grid grid-cols-3 divide-x divide-slate-100 rounded-2xl bg-white shadow-xl shadow-brand-900/10 ring-1 ring-slate-900/5">
+          {features.map((f) => (
+            <div
+              key={f.title}
+              className="flex flex-col items-center gap-1.5 px-2 py-3.5 text-center sm:flex-row sm:gap-3 sm:px-6 sm:py-4 sm:text-left"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600 sm:h-11 sm:w-11">
+                {f.icon}
+              </span>
+              <div className="leading-tight">
+                <p className="text-[11px] font-semibold text-slate-900 sm:text-sm">{f.title}</p>
+                <p className="hidden text-xs text-slate-500 sm:block">{f.sub}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

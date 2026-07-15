@@ -198,10 +198,8 @@ enum ShippingMethod {
 model Order {
   id String @id @default(cuid())
 
-  firstName String
-  lastName  String
-  email     String
-  phone     String
+  fullName String
+  phone    String
 
   wilayaId          Int?
   wilaya            Wilaya? @relation(fields: [wilayaId], references: [id], onDelete: SetNull)
@@ -217,6 +215,10 @@ model Order {
 
   deliveryFeeSnapshot Decimal @db.Decimal(10, 2)
   totalSnapshot       Decimal @db.Decimal(10, 2)
+
+  // Livraison speciale : au moins un produit non livrable normalement. Le tarif de livraison
+  // n'est pas calcule a la commande (deliveryFeeSnapshot = 0 provisoire) ; l'admin le fixe ensuite.
+  specialDelivery Boolean @default(false)
 
   adminNote String @default("") @db.Text // note interne admin (non visible du client)
 

@@ -53,7 +53,7 @@ export interface ImportSummary {
 }
 
 export const adminAuthApi = {
-  login: (email: string, password: string) => apiClient.post<AdminUser>("/api/admin/auth/login", { email, password }),
+  login: (password: string) => apiClient.post<AdminUser>("/api/admin/auth/login", { password }),
   logout: () => apiClient.post<void>("/api/admin/auth/logout"),
   me: () => apiClient.get<AdminUser>("/api/admin/auth/me"),
 };
@@ -109,6 +109,8 @@ export const adminOrdersApi = {
   },
   updateStatus: (id: string, status: OrderStatus) => apiClient.patch<Order>(`/api/admin/orders/${id}/status`, { status }),
   updateNote: (id: string, note: string) => apiClient.patch<Order>(`/api/admin/orders/${id}/note`, { note }),
+  updateDeliveryFee: (id: string, deliveryFee: number) =>
+    apiClient.patch<Order>(`/api/admin/orders/${id}/delivery-fee`, { deliveryFee }),
 };
 
 export const adminWilayasApi = {

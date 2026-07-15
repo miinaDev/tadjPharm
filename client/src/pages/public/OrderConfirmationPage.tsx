@@ -35,6 +35,13 @@ export function OrderConfirmationPage() {
         confirmer.
       </p>
 
+      {order.specialDelivery && (
+        <div className="w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm leading-relaxed text-amber-700">
+          Votre commande contient un produit à livraison spéciale. Le tarif de livraison n'est pas encore fixé : il vous sera
+          communiqué par la parapharmacie lors de la confirmation.
+        </div>
+      )}
+
       <div className="w-full rounded-3xl bg-white p-5 text-left text-sm shadow-sm">
         <div className="mb-3 flex flex-col gap-1.5 border-b border-slate-100 pb-3">
           {order.items.map((item) => (
@@ -48,9 +55,7 @@ export function OrderConfirmationPage() {
         </div>
         <div className="flex justify-between text-slate-500">
           <span>Client</span>
-          <span className="text-slate-700">
-            {order.firstName} {order.lastName}
-          </span>
+          <span className="text-slate-700">{order.fullName}</span>
         </div>
         <div className="mt-1 flex justify-between text-slate-500">
           <span>Wilaya</span>

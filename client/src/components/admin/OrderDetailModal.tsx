@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import type { Order } from "../../types";
-import { useUpdateOrderNote } from "../../hooks/useAdminOrders";
+import { useUpdateOrderDeliveryFee, useUpdateOrderNote } from "../../hooks/useAdminOrders";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { PriceTag } from "../product/PriceTag";
 import { IconClose } from "../ui/icons";
@@ -30,6 +30,15 @@ export function OrderDetailModal({ order, onClose }: { order: Order; onClose: ()
   const [note, setNote] = useState(order.adminNote ?? "");
   const noteDirty = note !== (order.adminNote ?? "");
 
+  // Tarif de livraison editable (notamment pour les commandes a livraison speciale, laissees
+  // en attente a la creation). Le total est recalcule en direct a partir du sous-total.
+  const updateFee = useUpdateOrderDeliveryFee();
+  const [fee, setFee] = useState(String(order.deliveryFeeSnapshot));
+  const parsedFee = fee.trim() === "" ? NaN : Number(fee);
+  const feeValid = Number.isFinite(parsedFee) && parsedFee >= 0;
+  const feeDirty = feeValid && parsedFee !== order.deliveryFeeSnapshot;
+  const liveTotal = subtotal + (feeValid ? parsedFee : order.deliveryFeeSnapshot);
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 sm:items-center sm:p-4" onClick={onClose}>
       <div
@@ -55,9 +64,7 @@ export function OrderDetailModal({ order, onClose }: { order: Order; onClose: ()
 
         <div className="flex flex-col gap-3">
           <Section title="Client">
-            <Row label="Prenom" value={order.firstName} />
-            <Row label="Nom" value={order.lastName} />
-            <Row label="Email" value={order.email} />
+            <Row label="Nom" value={order.fullName} />
             <Row label="Telephone" value={order.phone} />
             <Row label="Wilaya" value={order.wilayaNameSnapshot || order.wilaya?.name || "-"} />
           </Section>
@@ -92,10 +99,42 @@ export function OrderDetailModal({ order, onClose }: { order: Order; onClose: ()
 
           <Section title="Paiement (a la livraison)">
             <Row label="Sous-total" value={<PriceTag amount={subtotal} />} />
-            <Row label="Livraison" value={<PriceTag amount={order.deliveryFeeSnapshot} />} />
+
+            <div className="flex items-center justify-between gap-3 py-1.5 text-sm">
+              <span className="text-slate-500">
+                Livraison
+                {order.specialDelivery && order.deliveryFeeSnapshot === 0 && (
+                  <span className="ml-1 font-medium text-amber-600">(a definir)</span>
+                )}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  min={0}
+                  step="1"
+                  value={fee}
+                  onChange={(e) => setFee(e.target.value)}
+                  className="h-8 w-24 rounded-lg border border-slate-200 bg-white px-2 text-right text-sm font-medium text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <span className="text-xs text-slate-400">DA</span>
+              </div>
+            </div>
+
             <div className="mt-1 flex justify-between border-t border-slate-200 pt-1.5 text-sm font-semibold text-slate-900">
               <span>Total</span>
-              <PriceTag amount={order.totalSnapshot} />
+              <PriceTag amount={liveTotal} />
+            </div>
+
+            <div className="mt-2 flex items-center justify-end gap-2">
+              {feeDirty && !updateFee.isPending && <span className="text-xs text-amber-600">Non enregistre</span>}
+              <button
+                type="button"
+                onClick={() => updateFee.mutate({ id: order.id, deliveryFee: parsedFee })}
+                disabled={!feeDirty || updateFee.isPending}
+                className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {updateFee.isPending ? "Enregistrement..." : "Enregistrer le tarif"}
+              </button>
             </div>
           </Section>
 

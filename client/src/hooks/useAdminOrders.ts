@@ -27,3 +27,14 @@ export function useUpdateOrderNote() {
     },
   });
 }
+
+export function useUpdateOrderDeliveryFee() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, deliveryFee }: { id: string; deliveryFee: number }) => adminOrdersApi.updateDeliveryFee(id, deliveryFee),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+    },
+  });
+}

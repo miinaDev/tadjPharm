@@ -11,9 +11,7 @@ export const createOrderSchema = z
     // Pas de plafond a 58 : les wilayas personnalisees ont un id >= 59.
     // Le service verifie de toute facon l'existence et l'activation de la wilaya.
     wilayaId: z.number().int().min(1),
-    firstName: z.string().trim().min(1).max(100),
-    lastName: z.string().trim().min(1).max(100),
-    email: z.string().trim().email(),
+    fullName: z.string().trim().min(1).max(200),
     phone: z.string().trim().min(6).max(30),
     shippingMethod: z.enum(["HOME", "OFFICE"]),
     address: z.string().trim().max(500).optional(),
@@ -36,4 +34,8 @@ export const updateOrderStatusSchema = z.object({
 
 export const updateOrderNoteSchema = z.object({
   note: z.string().max(2000).default(""),
+});
+
+export const updateOrderDeliveryFeeSchema = z.object({
+  deliveryFee: z.number().min(0).max(1_000_000),
 });

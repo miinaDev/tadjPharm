@@ -4,9 +4,7 @@ import type { Order, ShippingMethod } from "../types";
 export interface CreateOrderPayload {
   items: { variantId: string; quantity: number }[];
   wilayaId: number;
-  firstName: string;
-  lastName: string;
-  email: string;
+  fullName: string;
   phone: string;
   shippingMethod: ShippingMethod;
   address?: string;

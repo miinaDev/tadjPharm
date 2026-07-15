@@ -15,6 +15,7 @@ export interface CheckoutLine {
   imageUrl: string | null;
   unitPrice: number;
   quantity: number;
+  isDeliverable?: boolean;
 }
 
 interface CheckoutModalProps {
@@ -31,9 +32,7 @@ export function CheckoutModal({ lines, onQuantityChange, onRemove, onClose, onOr
   const createOrder = useCreateOrder();
 
   const [wilayaId, setWilayaId] = useState<number | "">("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("HOME");
   const [address, setAddress] = useState("");
@@ -45,11 +44,16 @@ export function CheckoutModal({ lines, onQuantityChange, onRemove, onClose, onOr
   const officeAvailable = bureaus.length > 0;
   const subtotal = lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
   const itemCount = lines.reduce((sum, l) => sum + l.quantity, 0);
-  const deliveryFee = selectedWilaya
-    ? shippingMethod === "OFFICE"
-      ? selectedWilaya.officePrice
-      : selectedWilaya.homePrice
-    : null;
+  // Livraison speciale : au moins un article non livrable normalement -> le tarif de
+  // livraison n'est pas calcule ici, il sera communique par la parapharmacie.
+  const isSpecialDelivery = lines.some((l) => l.isDeliverable === false);
+  const deliveryFee = isSpecialDelivery
+    ? null
+    : selectedWilaya
+      ? shippingMethod === "OFFICE"
+        ? selectedWilaya.officePrice
+        : selectedWilaya.homePrice
+      : null;
 
   function handleWilayaChange(id: number) {
     setWilayaId(id);
@@ -81,9 +85,7 @@ export function CheckoutModal({ lines, onQuantityChange, onRemove, onClose, onOr
       const order = await createOrder.mutateAsync({
         items: lines.map((l) => ({ variantId: l.variantId, quantity: l.quantity })),
         wilayaId,
-        firstName,
-        lastName,
-        email,
+        fullName,
         phone,
         shippingMethod,
         address: shippingMethod === "HOME" ? address.trim() : undefined,
@@ -153,20 +155,9 @@ export function CheckoutModal({ lines, onQuantityChange, onRemove, onClose, onOr
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-slate-600">Prenom</label>
-              <input required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-slate-600">Nom</label>
-              <input required value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
-            </div>
-          </div>
-
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-600">Email</label>
-            <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
+            <label className="mb-1.5 block text-xs font-medium text-slate-600">Nom complet</label>
+            <input required value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} />
           </div>
 
           <div>
@@ -257,6 +248,13 @@ export function CheckoutModal({ lines, onQuantityChange, onRemove, onClose, onOr
           <div className="mt-1">
             <OrderSummary subtotal={subtotal} itemCount={itemCount} deliveryFee={deliveryFee} />
           </div>
+
+          {isSpecialDelivery && (
+            <p className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-700">
+              Votre commande contient un produit à livraison spéciale. Le tarif de livraison n'est pas calculé
+              automatiquement : il vous sera communiqué par la parapharmacie lors de la confirmation.
+            </p>
+          )}
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 

@@ -118,9 +118,7 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+  fullName: string;
   phone: string;
   wilayaId: number | null;
   wilaya: Wilaya | null;
@@ -133,6 +131,7 @@ export interface Order {
   items: OrderItem[];
   deliveryFeeSnapshot: number;
   totalSnapshot: number;
+  specialDelivery: boolean;
   adminNote: string;
   status: OrderStatus;
   createdAt: string;

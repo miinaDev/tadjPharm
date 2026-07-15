@@ -9,6 +9,9 @@ export interface CartItem {
   imageUrl: string | null;
   unitPrice: number;
   quantity: number;
+  // Livraison speciale : false = tarif de livraison communique par la boutique.
+  // Optionnel pour rester compatible avec les paniers deja stockes (absent = livrable).
+  isDeliverable?: boolean;
 }
 
 interface CartContextValue {
