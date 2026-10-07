@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useCategories, useProducts } from "../../hooks/useCatalog";
 import { Hero } from "../../components/catalog/Hero";
 import { CategoryFilterBar } from "../../components/catalog/CategoryFilterBar";
@@ -14,31 +14,55 @@ const PAGE_SIZE = 50;
 
 export function CatalogPage() {
   const { slug } = useParams<{ slug?: string }>();
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [activeSub, setActiveSub] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [pageInput, setPageInput] = useState("1");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const urlSearch = searchParams.get("q") || "";
+  const activeSub = searchParams.get("sub") || null;
+  const page = parseInt(searchParams.get("page") || "1", 10) || 1;
+
+  const [search, setSearch] = useState(urlSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(urlSearch);
+  const [pageInput, setPageInput] = useState(String(page));
   const { data: categories } = useCategories();
 
-  // On temporise la saisie pour ne pas requeter a chaque frappe.
+  // On synchronise la recherche locale si l'URL change (ex: bouton retour)
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
-    return () => clearTimeout(timer);
-  }, [search]);
+    setSearch(urlSearch);
+  }, [urlSearch]);
 
-  // Changer de categorie remet la sous-categorie a zero.
+  // On temporise la saisie pour ne pas requeter a chaque frappe et on met a jour l'URL
   useEffect(() => {
-    setActiveSub(null);
-  }, [slug]);
+    const timer = setTimeout(() => {
+      const trimmed = search.trim();
+      setDebouncedSearch(trimmed);
+      
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev);
+        const currentQ = next.get("q") || "";
+        if (trimmed !== currentQ) {
+          if (trimmed) next.set("q", trimmed);
+          else next.delete("q");
+          next.delete("page"); // On retourne a la premiere page
+          return next;
+        }
+        return prev;
+      }, { replace: true });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, setSearchParams]);
+
+  function setActiveSub(sub: string | null) {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (sub) next.set("sub", sub);
+      else next.delete("sub");
+      next.delete("page");
+      return next;
+    });
+  }
 
   const activeCategory = categories?.find((c) => c.slug === slug);
   const subcategories = activeCategory?.subcategories ?? [];
-
-  // Tout changement de filtre ou de recherche ramene a la premiere page.
-  useEffect(() => {
-    setPage(1);
-  }, [slug, activeSub, debouncedSearch]);
 
   const { data, isLoading } = useProducts({
     categorySlug: slug,
@@ -59,9 +83,14 @@ export function CatalogPage() {
     setPageInput(String(page));
   }, [page]);
 
-  function goToPage(next: number) {
-    const clamped = Math.min(totalPages, Math.max(1, next));
-    setPage(clamped);
+  function goToPage(nextPage: number) {
+    const clamped = Math.min(totalPages, Math.max(1, nextPage));
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (clamped > 1) next.set("page", String(clamped));
+      else next.delete("page");
+      return next;
+    });
     document.getElementById("catalogue")?.scrollIntoView({ behavior: "auto", block: "start" });
   }
 

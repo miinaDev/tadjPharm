@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import type { Category } from "../../types";
 
 interface CategoryFilterBarProps {
@@ -34,13 +34,17 @@ function Tab({ to, label, active }: { to: string; label: string; active: boolean
 }
 
 export function CategoryFilterBar({ categories, activeSlug }: CategoryFilterBarProps) {
+  const [searchParams] = useSearchParams();
+  const q = searchParams.get("q");
+  const qStr = q ? `?q=${encodeURIComponent(q)}` : "";
+
   return (
     <div className="-mx-4 mb-2 flex items-center gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-      <Tab to="/" label="Tous" active={!activeSlug} />
+      <Tab to={`/${qStr}`} label="Tous" active={!activeSlug} />
       {categories.map((category) => (
         <Tab
           key={category.id}
-          to={`/categorie/${category.slug}`}
+          to={`/categorie/${category.slug}${qStr}`}
           label={category.name}
           active={activeSlug === category.slug}
         />

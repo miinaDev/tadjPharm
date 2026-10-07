@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useCategories } from "../../hooks/useCatalog";
@@ -9,6 +9,26 @@ export function Header() {
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Si le mouvement est principalement vertical
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault();
+        nav.scrollLeft += e.deltaY;
+      }
+    };
+
+    nav.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      nav.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
 
   // Sur l'accueil, le header demarre transparent, pose sur la photo du hero,
   // puis devient opaque des que l'on scrolle. Ailleurs, il est toujours opaque.
@@ -31,17 +51,15 @@ export function Header() {
   ];
 
   // Actions = pilules (grammaire commune avec le CTA du hero).
-  const actionButtonClass = `flex h-11 w-11 items-center justify-center rounded-full transition ${
-    transparent
-      ? "bg-white/10 text-white ring-1 ring-white/25 backdrop-blur-sm hover:bg-white/20"
-      : "bg-white text-slate-700 shadow-sm hover:text-brand-600"
-  }`;
+  const actionButtonClass = `flex h-11 w-11 items-center justify-center rounded-full transition ${transparent
+    ? "bg-white/10 text-white ring-1 ring-white/25 backdrop-blur-sm hover:bg-white/20"
+    : "bg-white text-slate-700 shadow-sm hover:text-brand-600"
+    }`;
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-colors duration-300 ${
-        transparent ? "bg-transparent" : "bg-canvas/85 backdrop-blur"
-      }`}
+      className={`sticky top-0 z-50 transition-colors duration-300 ${transparent ? "bg-transparent" : "bg-canvas/85 backdrop-blur"
+        }`}
     >
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <div className="relative z-50 flex items-center justify-between gap-3 py-4">
@@ -65,17 +83,15 @@ export function Header() {
 
             <Link
               to="/"
-              className={`flex shrink-0 items-center gap-2 text-lg font-bold tracking-tight transition-colors ${
-                transparent ? "text-white" : "text-brand-900"
-              }`}
+              className={`flex shrink-0 items-center gap-2 text-lg font-bold tracking-tight transition-colors ${transparent ? "text-white" : "text-brand-900"
+                }`}
             >
               {/* Pastille verre depoli autour de l'ecusson, plus blanche que les autres
                   pilules : l'ecusson fonce a besoin d'un fond clair pour ressortir sur la
                   photo sombre. En mode opaque, pastille blanche comme les autres actions. */}
               <span
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition ${
-                  transparent ? "bg-white/80 ring-1 ring-white/40 backdrop-blur-sm" : "bg-white shadow-sm"
-                }`}
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition ${transparent ? "bg-white/80 ring-1 ring-white/40 backdrop-blur-sm" : "bg-white shadow-sm"
+                  }`}
               >
                 <img src="/logo.png" alt="Logo TadjPharm" className="h-8 w-auto" />
               </span>
@@ -86,22 +102,25 @@ export function Header() {
           </div>
 
           {/* Navigation primaire visible sur desktop — pas de hamburger quand la place existe */}
-          <nav className="hidden min-w-0 items-center gap-0.5 lg:flex" aria-label="Catégories">
+          <nav ref={navRef}
+            className="hidden min-w-0 flex-1 items-center gap-0.5 overflow-x-auto py-2 lg:flex
+             [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
+             [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto"
+            aria-label="Catégories"
+          >
             {(categories ?? []).map((c) => {
               const active = pathname === `/categorie/${c.slug}`;
               return (
                 <Link
                   key={c.id}
                   to={`/categorie/${c.slug}`}
-                  className={`whitespace-nowrap rounded-full px-3 py-2 text-[13px] font-medium transition ${
-                    active
-                      ? `underline decoration-crown-400 decoration-2 underline-offset-8 ${
-                          transparent ? "text-white" : "text-brand-700"
-                        }`
-                      : transparent
-                        ? "text-white/80 hover:text-white"
-                        : "text-slate-600 hover:text-brand-700"
-                  }`}
+                  className={`shrink-0 whitespace-nowrap rounded-full px-3 py-2 text-[13px] font-medium transition ${active
+                    ? `underline decoration-crown-400 decoration-2 underline-offset-8 ${transparent ? "text-white" : "text-brand-700"
+                    }`
+                    : transparent
+                      ? "text-white/80 hover:text-white"
+                      : "text-slate-600 hover:text-brand-700"
+                    }`}
                 >
                   {c.name}
                 </Link>
@@ -133,9 +152,8 @@ export function Header() {
                 key={link.to}
                 to={link.to}
                 onClick={() => setMenuOpen(false)}
-                className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                  link.active ? "bg-brand-50 text-brand-600" : "text-slate-600 hover:bg-slate-50"
-                }`}
+                className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition ${link.active ? "bg-brand-50 text-brand-600" : "text-slate-600 hover:bg-slate-50"
+                  }`}
               >
                 {link.label}
                 <svg viewBox="0 0 24 24" className="h-4 w-4 opacity-40" fill="none" stroke="currentColor" strokeWidth={2}>
