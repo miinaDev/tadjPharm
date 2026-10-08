@@ -16,18 +16,33 @@ export function CatalogPage() {
   const { slug } = useParams<{ slug?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const urlSearch = searchParams.get("q") || "";
+  const urlSearch = searchParams.get("q");
   const activeSub = searchParams.get("sub") || null;
   const page = parseInt(searchParams.get("page") || "1", 10) || 1;
 
-  const [search, setSearch] = useState(urlSearch);
-  const [debouncedSearch, setDebouncedSearch] = useState(urlSearch);
+  useEffect(() => {
+    // Au montage, si pas de paramètre 'q', on restaure depuis le sessionStorage
+    if (urlSearch === null) {
+      const savedSearch = sessionStorage.getItem("catalogSearch");
+      if (savedSearch) {
+        setSearchParams(prev => {
+          const next = new URLSearchParams(prev);
+          next.set("q", savedSearch);
+          return next;
+        }, { replace: true });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [search, setSearch] = useState(urlSearch || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(urlSearch || "");
   const [pageInput, setPageInput] = useState(String(page));
   const { data: categories } = useCategories();
 
-  // On synchronise la recherche locale si l'URL change (ex: bouton retour)
+  // On synchronise la recherche locale si l'URL change (ex: bouton retour ou restauration)
   useEffect(() => {
-    setSearch(urlSearch);
+    setSearch(urlSearch || "");
   }, [urlSearch]);
 
   // On temporise la saisie pour ne pas requeter a chaque frappe et on met a jour l'URL
@@ -35,6 +50,12 @@ export function CatalogPage() {
     const timer = setTimeout(() => {
       const trimmed = search.trim();
       setDebouncedSearch(trimmed);
+      
+      if (trimmed) {
+        sessionStorage.setItem("catalogSearch", trimmed);
+      } else {
+        sessionStorage.removeItem("catalogSearch");
+      }
       
       setSearchParams(prev => {
         const next = new URLSearchParams(prev);
